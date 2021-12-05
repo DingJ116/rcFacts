@@ -162,8 +162,8 @@ int main() {
                 return 1;
             }
             if (attr2 != "encoding") {
-                 std::cerr << "parser error: Missing required encoding in XML declaration\n";
-                 return 1;
+                std::cerr << "parser error: Missing required encoding in XML declaration\n";
+                return 1;
             }
             const std::string encoding(pc, pvalueend);
             pc = std::next(pvalueend);
@@ -213,8 +213,8 @@ int main() {
             std::advance(pc, 2);
             std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return isspace(c) || c == '>' || c == '/'; });
             if (pnameend == std::next(endpc)) {
-                  std::cerr << "parser error: Incomplete element end tag name\n";
-                  return 1;
+                std::cerr << "parser error: Incomplete element end tag name\n";
+                return 1;
             }
             const std::string qname(pc, pnameend);
             const auto colonpos = qname.find(':');
