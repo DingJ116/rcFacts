@@ -13,6 +13,7 @@
 */
 
 #include <iostream>
+#include <locale>
 #include <iterator>
 #include <string>
 #include <algorithm>
@@ -456,6 +457,8 @@ int main() {
             pc = endpc;
         }
     }
+    std::locale cpploc{""};
+    std::cout.imbue(cpploc);
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Item | Count |\n";
     std::cout << "|:-----|-----:|\n";
