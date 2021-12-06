@@ -49,7 +49,7 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
 std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::string& buffer, long& totalBytes) {
 
     // find number of unprocessed characters [pc, buffer.cend())
-    auto d = std::distance(pc, buffer.cend());
+    size_t d = std::distance(pc, buffer.cend());
 
     // move unprocessed characters, [pc, buffer.cend()), to start of the buffer
     std::copy(pc, buffer.cend(), buffer.begin());
@@ -112,7 +112,7 @@ int main() {
                 }
             }
             std::advance(pc, startXMLDecl.size());
-            pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, endpc, isspace);
             // parse required version
             if (pc == endpc) {
                 std::cerr << "parser error: Missing space after before version in XML declaration\n";
@@ -139,7 +139,7 @@ int main() {
             }
             const std::string_view version(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, endpc, isspace);
             // parse encoding
             if (pc == endpc) {
                 std::cerr << "parser error: Missing required encoding in XML declaration\n";
@@ -170,7 +170,7 @@ int main() {
             }
             const std::string_view encoding(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, endpc, isspace);
             // parse standalone
             if (pc == endpc) {
                 std::cerr << "parser error: Missing required third attribute standalone in XML declaration\n";
@@ -197,9 +197,9 @@ int main() {
             }
             const std::string_view standalone(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, endpc, isspace);
             std::advance(pc, endXMLDecl.size());
-            pc = std::find_if_not(pc, buffer.cend(), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, buffer.cend(), isspace);
 
         } else if (*pc == '<' && *std::next(pc) == '/') {
             // parse end tag
@@ -241,7 +241,7 @@ int main() {
                 }
             }
             std::advance(pc, 1);
-            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return isspace(c) || c == '>' || c == '/'; });
+            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
             if (pnameend == std::next(endpc)) {
                 std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
                 return 1;
@@ -267,7 +267,7 @@ int main() {
                 ++file_count;
             else if (local_name == "comment")
                 ++comment_count;
-            pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
             ++depth;
             intag = true;
             if (intag && *pc == '>') {
@@ -296,7 +296,7 @@ int main() {
             }
             const std::string_view prefix(&(*pc), prefixSize);
             pc = std::next(pnameend);
-            pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (pc == std::next(endpc)) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
@@ -314,7 +314,7 @@ int main() {
             }
             const std::string_view uri(&(*pc), pnameend - pc);
             pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (intag && *pc == '>') {
                 std::advance(pc, 1);
                 intag = false;
@@ -338,7 +338,7 @@ int main() {
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             pc = std::next(pnameend);
-            pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (pc == buffer.cend()) {
                 std::cerr << "parser error : attribute " << qname << " incomplete attribute\n";
                 return 1;
@@ -358,7 +358,7 @@ int main() {
             if (local_name == "url")
                 url = value;
             pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (intag && *pc == '>') {
                 std::advance(pc, 1);
                 intag = false;
@@ -396,10 +396,10 @@ int main() {
                 }
             }
             pc = std::next(endpc, endcomment.size());
-            pc = std::find_if_not(pc, buffer.cend(), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, buffer.cend(), isspace);
         } else if (*pc != '<' && depth == 0) {
             // parse characters before or after XML
-            pc = std::find_if_not(pc, buffer.cend(), [] (char c) { return isspace(c); });
+            pc = std::find_if_not(pc, buffer.cend(), isspace);
             if (pc == buffer.cend() || !isspace(*pc)) {
                 std::cerr << "parser error : Start tag expected, '<' not found\n";
                 return 1;
