@@ -214,7 +214,7 @@ int main() {
                 }
             }
             std::advance(pc, 2);
-            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return isspace(c) || c == '>' || c == '/'; });
+            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return isspace(c) || c == '>'; });
             if (pnameend == std::next(endpc)) {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
