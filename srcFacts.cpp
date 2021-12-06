@@ -100,6 +100,8 @@ int main() {
                 break;
         } else if (*pc == '<' && *std::next(pc) == '?') {
             // parse XML declaration
+            const std::string_view startXMLDecl = "<?xml";
+            const std::string_view endXMLDecl = "?>";
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
@@ -109,7 +111,7 @@ int main() {
                     return 1;
                 }
             }
-            std::advance(pc, strlen("<?xml"));
+            std::advance(pc, startXMLDecl.size());
             pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
             // parse required version
             if (pc == endpc) {
@@ -196,7 +198,7 @@ int main() {
             const std::string_view standalone(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
-            std::advance(pc, strlen("?>"));
+            std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), [] (char c) { return isspace(c); });
 
         } else if (*pc == '<' && *std::next(pc) == '/') {
