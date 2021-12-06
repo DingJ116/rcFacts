@@ -98,6 +98,84 @@ int main() {
             pc = refillBuffer(pc, buffer, total);
             if (pc == buffer.cend())
                 break;
+        } else if (*pc == '<' && *std::next(pc) != '/' && *std::next(pc) != '?') {
+            // parse start tag
+            std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
+            if (endpc == buffer.cend()) {
+                pc = refillBuffer(pc, buffer, total);
+                endpc = std::find(pc, buffer.cend(), '>');
+                if (endpc == buffer.cend()) {
+                    std::cerr << "parser error: Incomplete element start tag\n";
+                    return 1;
+                }
+            }
+            std::advance(pc, 1);
+            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
+            if (pnameend == std::next(endpc)) {
+                std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
+                return 1;
+            }
+            const std::string_view qname(&(*pc), pnameend - pc);
+            size_t colonpos = qname.find(':');
+            if (colonpos == std::string::npos)
+                colonpos = 0;
+            const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            if (colonpos != 0)
+                colonpos += 1;
+            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            pc = pnameend;
+            if (local_name == "expr")
+                ++expr_count;
+            else if (local_name == "function")
+                ++function_count;
+            else if (local_name == "decl")
+                ++decl_count;
+            else if (local_name == "class")
+                ++class_count;
+            else if (local_name == "unit" && depth > 1)
+                ++file_count;
+            else if (local_name == "comment")
+                ++comment_count;
+            pc = std::find_if_not(pc, std::next(endpc), isspace);
+            ++depth;
+            intag = true;
+            if (intag && *pc == '>') {
+                std::advance(pc, 1);
+                intag = false;
+            }
+            if (intag && *pc == '/' && *std::next(pc) == '>') {
+                std::advance(pc, 2);
+                intag = false;
+                --depth;
+            }
+        } else if (*pc == '<' && *std::next(pc) == '/') {
+            // parse end tag
+            --depth;
+            std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
+            if (endpc == buffer.cend()) {
+                pc = refillBuffer(pc, buffer, total);
+                endpc = std::find(pc, buffer.cend(), '>');
+                if (endpc == buffer.cend()) {
+                    std::cerr << "parser error: Incomplete element end tag\n";
+                    return 1;
+                }
+            }
+            std::advance(pc, 2);
+            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c); });
+            if (pnameend == std::next(endpc)) {
+                std::cerr << "parser error: Incomplete element end tag name\n";
+                return 1;
+            }
+            const std::string_view qname(&(*pc), pnameend - pc);
+            size_t colonpos = qname.find(':');
+            if (colonpos == std::string::npos)
+                colonpos = 0;
+            const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            if (colonpos != 0)
+                colonpos += 1;
+            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            pc = std::next(endpc);
+
         } else if (*pc == '<' && *std::next(pc) == '?') {
             // parse XML declaration
             const std::string_view startXMLDecl = "<?xml";
@@ -122,7 +200,7 @@ int main() {
             const std::string_view attr(&(*pc), pnameend - pc);
             pc = pnameend;
             std::advance(pc, 1);
-            char delim = *pc;
+            const char delim = *pc;
             if (delim != '"' && delim != '\'') {
                 std::cerr << "parser error: Invalid start delimiter for version in XML declaration\n";
                 return 1;
@@ -201,84 +279,6 @@ int main() {
             std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
 
-        } else if (*pc == '<' && *std::next(pc) == '/') {
-            // parse end tag
-            --depth;
-            std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
-            if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
-                endpc = std::find(pc, buffer.cend(), '>');
-                if (endpc == buffer.cend()) {
-                    std::cerr << "parser error: Incomplete element end tag\n";
-                    return 1;
-                }
-            }
-            std::advance(pc, 2);
-            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c); });
-            if (pnameend == std::next(endpc)) {
-                std::cerr << "parser error: Incomplete element end tag name\n";
-                return 1;
-            }
-            const std::string_view qname(&(*pc), pnameend - pc);
-            size_t colonpos = qname.find(':');
-            if (colonpos == std::string::npos)
-                colonpos = 0;
-            const std::string_view prefix(&(*qname.cbegin()), colonpos);
-            if (colonpos != 0)
-                colonpos += 1;
-            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
-            pc = std::next(endpc);
-
-        } else if (*pc == '<' && *std::next(pc) != '/' && *std::next(pc) != '?') {
-            // parse start tag
-            std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
-            if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
-                endpc = std::find(pc, buffer.cend(), '>');
-                if (endpc == buffer.cend()) {
-                    std::cerr << "parser error: Incomplete element start tag\n";
-                    return 1;
-                }
-            }
-            std::advance(pc, 1);
-            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
-            if (pnameend == std::next(endpc)) {
-                std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
-                return 1;
-            }
-            const std::string_view qname(&(*pc), pnameend - pc);
-            size_t colonpos = qname.find(':');
-            if (colonpos == std::string::npos)
-                colonpos = 0;
-            const std::string_view prefix(&(*qname.cbegin()), colonpos);
-            if (colonpos != 0)
-                colonpos += 1;
-            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
-            pc = pnameend;
-            if (local_name == "expr")
-                ++expr_count;
-            else if (local_name == "function")
-                ++function_count;
-            else if (local_name == "decl")
-                ++decl_count;
-            else if (local_name == "class")
-                ++class_count;
-            else if (local_name == "unit" && depth > 1)
-                ++file_count;
-            else if (local_name == "comment")
-                ++comment_count;
-            pc = std::find_if_not(pc, std::next(endpc), isspace);
-            ++depth;
-            intag = true;
-            if (intag && *pc == '>') {
-                std::advance(pc, 1);
-                intag = false;
-            }
-            if (intag && *pc == '/' && *std::next(pc) == '>') {
-                std::advance(pc, 2);
-                intag = false;
-                --depth;
-            }
         } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS.size() && std::string(pc, std::next(pc, XMLNS.size())) == XMLNS
             && (*std::next(pc, XMLNS.size()) == ':' || *std::next(pc, XMLNS.size()) == '=')) {
             // parse namespace
@@ -385,17 +385,18 @@ int main() {
             pc = std::next(endpc, endCDATA.size());
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
-            const std::string_view endcomment = "-->";
-            std::string::const_iterator endpc = std::search(pc, buffer.cend(), endcomment.begin(), endcomment.end());
+            const std::string_view endComment = "-->";
+            std::string::const_iterator endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
-                endpc = std::search(pc, buffer.cend(), endcomment.begin(), endcomment.end());
+                endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
                 if (endpc == buffer.cend()) {
                     std::cerr << "parser error : Unterminated XML comment\n";
                     return 1;
                 }
             }
-            pc = std::next(endpc, endcomment.size());
+            const std::string_view comment(&(*pc), endpc - pc);
+            pc = std::next(endpc, endComment.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
         } else if (*pc != '<' && depth == 0) {
             // parse characters before or after XML
@@ -439,6 +440,7 @@ int main() {
                 std::advance(pc, 1);
             }
             ++textsize;
+
         } else if (*pc != '<') {
             // parse character non-entity references
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
