@@ -341,7 +341,7 @@ int main() {
                 std::cerr << "parser error : attribute " << qname << " incomplete attribute\n";
                 return 1;
             }
-            char delim = *pc;
+            const char delim = *pc;
             if (delim != '"' && delim != '\'') {
                 std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
                 return 1;
@@ -367,7 +367,7 @@ int main() {
             }
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '[') {
             // parse CDATA
-            const std::string endcdata = "]]>";
+            const std::string_view endcdata = "]]>";
             std::advance(pc, strlen("<![CDATA["));
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endcdata.begin(), endcdata.end());
             if (endpc == buffer.cend()) {
@@ -382,7 +382,7 @@ int main() {
             pc = std::next(endpc, strlen("]]>"));
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
-            const std::string endcomment = "-->";
+            const std::string_view endcomment = "-->";
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endcomment.begin(), endcomment.end());
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
@@ -392,7 +392,7 @@ int main() {
                     return 1;
                 }
             }
-            pc = std::next(endpc, strlen("-->"));
+            pc = std::next(endpc, endcomment.size());
             pc = std::find_if_not(pc, buffer.cend(), [] (char c) { return isspace(c); });
         } else if (*pc != '<' && depth == 0) {
             // parse characters before or after XML
@@ -402,20 +402,20 @@ int main() {
                 return 1;
             }
         } else if (*pc == '&') {
-            // parse entity references
-            std::string characters;
+            // parse character entity references
+            char character;
             if (std::distance(pc, buffer.cend()) < 3) {
-                pc = refillBuffer(pc, buffer, total);
-                if (std::distance(pc, buffer.cend()) < 3) {
+               pc = refillBuffer(pc, buffer, total);
+               if (std::distance(pc, buffer.cend()) < 3) {
                     std::cerr << "parser error : Incomplete entity reference, '" << std::string(pc, buffer.cend()) << "'\n";
                     return 1;
-                }
+               }
             }
             if (*std::next(pc) == 'l' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
-                characters += '<';
+                character = '<';
                 std::advance(pc, strlen("&lt;"));
             } else if (*std::next(pc) == 'g' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
-                characters += '>';
+                character = '>';
                 std::advance(pc, strlen("&gt;"));
             } else if (*std::next(pc) == 'a' && *std::next(pc, 2) == 'm' && *std::next(pc, 3) == 'p') {
                 if (std::distance(pc, buffer.cend()) < 4) {
@@ -430,15 +430,15 @@ int main() {
                     std::cerr << "parser error : Incomplete entity reference, '" << partialEntity << "'\n";
                     return 1;
                 }
-                characters += '&';
+                character = '&';
                 std::advance(pc, strlen("&amp;"));
             } else {
-                characters += '&';
+                character = '&';
                 std::advance(pc, 1);
             }
-            textsize += (int) characters.size();
+            ++textsize;
         } else if (*pc != '<') {
-            // parse characters
+            // parse character non-entity references
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
             loc += (int) std::count(characters.cbegin(), characters.cend(), '\n');
