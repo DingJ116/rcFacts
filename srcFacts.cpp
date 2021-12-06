@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <ctype.h>
+#include <string_view>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -216,18 +217,14 @@ int main() {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
             }
-            const std::string qname(pc, pnameend);
-            const auto colonpos = qname.find(':');
-            std::string prefixbase;
-            if (colonpos != std::string::npos)
-                prefixbase = qname.substr(0, colonpos);
-            const std::string prefix = std::move(prefixbase);
-            std::string local_namebase;
-            if (colonpos != std::string::npos)
-                local_namebase = qname.substr(colonpos + 1);
-            else
-                local_namebase = qname;
-            const std::string local_name = std::move(local_namebase);
+            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            size_t colonpos = qname.find(':');
+            if (colonpos == std::string::npos)
+                colonpos = 0;
+            const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            if (colonpos != 0)
+                colonpos += 1;
+            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             pc = std::next(endpc);
 
         } else if (*pc == '<' && *std::next(pc) != '/' && *std::next(pc) != '?') {
@@ -247,18 +244,14 @@ int main() {
                 std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
                 return 1;
             }
-            const std::string qname(pc, pnameend);
-            const auto colonpos = qname.find(':');
-            std::string prefixbase;
-            if (colonpos != std::string::npos)
-                prefixbase = qname.substr(0, colonpos);
-            const std::string prefix = std::move(prefixbase);
-            std::string local_namebase;
-            if (colonpos != std::string::npos)
-                local_namebase = qname.substr(colonpos + 1);
-            else
-                local_namebase = qname;
-            const std::string local_name = std::move(local_namebase);
+            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            size_t colonpos = qname.find(':');
+            if (colonpos == std::string::npos)
+                colonpos = 0;
+            const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            if (colonpos != 0)
+                colonpos += 1;
+            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             pc = pnameend;
             if (local_name == "expr")
                 ++expr_count;
@@ -451,7 +444,7 @@ int main() {
         } else if (*pc != '<') {
             // parse characters
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
-            const std::string characters(pc, endpc);
+            const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
             loc += (int) std::count(characters.cbegin(), characters.cend(), '\n');
             textsize += (int) characters.size();
             pc = endpc;
