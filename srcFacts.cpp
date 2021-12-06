@@ -84,12 +84,13 @@ int main() {
     int expr_count = 0;
     int function_count = 0;
     int class_count = 0;
-    int file_count = 0;
+    int unit_count = 0;
     int decl_count = 0;
     int comment_count = 0;
     int depth = 0;
     long total = 0;
     bool intag = false;
+    bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator pc = buffer.cend();
     while (true) {
@@ -132,25 +133,25 @@ int main() {
                 ++decl_count;
             else if (local_name == "class")
                 ++class_count;
-            else if (local_name == "unit" && depth > 1)
-                ++file_count;
+            else if (local_name == "unit")
+                ++unit_count;
             else if (local_name == "comment")
                 ++comment_count;
+            if (!isArchive && depth == 1 && local_name == "unit" )
+                isArchive = true;
             pc = std::find_if_not(pc, std::next(endpc), isspace);
-            ++depth;
             intag = true;
             if (intag && *pc == '>') {
                 std::advance(pc, 1);
                 intag = false;
+                ++depth;
             }
             if (intag && *pc == '/' && *std::next(pc) == '>') {
                 std::advance(pc, 2);
                 intag = false;
-                --depth;
             }
         } else if (*pc == '<' && *std::next(pc) == '/') {
             // parse end tag
-            --depth;
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
@@ -175,6 +176,7 @@ int main() {
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             pc = std::next(endpc);
+            --depth;
 
         } else if (*pc == '<' && *std::next(pc) == '?') {
             // parse XML declaration
@@ -318,6 +320,7 @@ int main() {
             if (intag && *pc == '>') {
                 std::advance(pc, 1);
                 intag = false;
+                ++depth;
             }
             if (intag && *pc == '/' && *std::next(pc) == '>') {
                 std::advance(pc, 2);
@@ -362,6 +365,7 @@ int main() {
             if (intag && *pc == '>') {
                 std::advance(pc, 1);
                 intag = false;
+                ++depth;
             }
             if (intag && *pc == '/' && *std::next(pc) == '>') {
                 std::advance(pc, 2);
@@ -450,13 +454,16 @@ int main() {
             pc = endpc;
         }
     }
+    int files = unit_count;
+    if (isArchive)
+        --files;
     std::locale cpploc{""};
     std::cout.imbue(cpploc);
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Item | Count |\n";
     std::cout << "|:-----|-----:|\n";
     std::cout << "| srcML | " << total << " |\n";
-    std::cout << "| files | " << file_count << " |\n";
+    std::cout << "| files | " << files << " |\n";
     std::cout << "| LOC | " << loc << " |\n";
     std::cout << "| characters | " << textsize << " |\n";
     std::cout << "| classes | " << class_count << " |\n";
