@@ -212,8 +212,7 @@ int main() {
             }
             std::string::const_iterator pnameend = std::find(pc, endpc, '=');
             const std::string_view attr(&(*pc), pnameend - pc);
-            pc = pnameend;
-            std::advance(pc, 1);
+            pc = std::next(pnameend);
             const char delim = *pc;
             if (delim != '"' && delim != '\'') {
                 std::cerr << "parser error: Invalid start delimiter for version in XML declaration\n";
@@ -243,8 +242,7 @@ int main() {
                 return 1;
             }
             const std::string_view attr2(&(*pc), pnameend - pc);
-            pc = pnameend;
-            std::advance(pc, 1);
+            pc = std::next(pnameend);
             char delim2 = *pc;
             if (delim2 != '"' && delim2 != '\'') {
                 std::cerr << "parser error: Invalid end delimiter for encoding in XML declaration\n";
