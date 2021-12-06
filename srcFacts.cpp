@@ -77,7 +77,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
 }
 
 int main() {
-    const int XMLNS_SIZE = strlen("xmlns");
+    const std::string_view XMLNS("xmlns");
     std::string url;
     int textsize = 0;
     int loc = 0;
@@ -214,7 +214,7 @@ int main() {
                 }
             }
             std::advance(pc, 2);
-            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return isspace(c) || c == '>'; });
+            std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c); });
             if (pnameend == std::next(endpc)) {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
@@ -279,10 +279,10 @@ int main() {
                 intag = false;
                 --depth;
             }
-        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS_SIZE && std::string(pc, std::next(pc, XMLNS_SIZE)) == "xmlns"
-            && (*std::next(pc, XMLNS_SIZE) == ':' || *std::next(pc, XMLNS_SIZE) == '=')) {
+        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS.size() && std::string(pc, std::next(pc, XMLNS.size())) == XMLNS
+            && (*std::next(pc, XMLNS.size()) == ':' || *std::next(pc, XMLNS.size()) == '=')) {
             // parse namespace
-            std::advance(pc, XMLNS_SIZE);
+            std::advance(pc, XMLNS.size());
             const std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             std::string::const_iterator pnameend = std::find(pc, std::next(endpc), '=');
             if (pnameend == std::next(endpc)) {
