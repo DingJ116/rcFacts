@@ -91,7 +91,7 @@ int main() {
     long total = 0;
     bool intag = false;
     std::string buffer(BUFFER_SIZE, ' ');
-    auto pc = buffer.cend();
+    std::string::const_iterator pc = buffer.cend();
     while (true) {
         if (std::distance(pc, buffer.cend()) < 5) {
             // refill buffer and adjust iterator
