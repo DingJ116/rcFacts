@@ -112,7 +112,7 @@ int main() {
             std::advance(pc, 1);
             std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
             if (pnameend == std::next(endpc)) {
-                std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
+                std::cerr << "parser error : Unterminated start tag '" << std::string_view(&(*pc), pnameend - pc) << "'\n";
                 return 1;
             }
             const std::string_view qname(&(*pc), pnameend - pc);
@@ -279,7 +279,7 @@ int main() {
             std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
 
-        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS.size() && std::string(pc, std::next(pc, XMLNS.size())) == XMLNS
+        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS.size() && std::string_view(&(*pc), XMLNS.size()) == XMLNS
             && (*std::next(pc, XMLNS.size()) == ':' || *std::next(pc, XMLNS.size()) == '=')) {
             // parse namespace
             std::advance(pc, XMLNS.size());
@@ -411,7 +411,7 @@ int main() {
             if (std::distance(pc, buffer.cend()) < 3) {
                pc = refillBuffer(pc, buffer, total);
                if (std::distance(pc, buffer.cend()) < 3) {
-                    std::cerr << "parser error : Incomplete entity reference, '" << std::string(pc, buffer.cend()) << "'\n";
+                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), buffer.cend() - pc) << "'\n";
                     return 1;
                }
             }
@@ -425,12 +425,12 @@ int main() {
                 if (std::distance(pc, buffer.cend()) < 4) {
                     pc = refillBuffer(pc, buffer, total);
                     if (std::distance(pc, buffer.cend()) < 4) {
-                        std::cerr << "parser error : Incomplete entity reference, '" << std::string(pc, buffer.cend()) << "'\n";
+                        std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), buffer.cend() - pc) << "'\n";
                         return 1;
                     }
                 }
                 if (*std::next(pc, 4) != ';') {
-                    std::cerr << "parser error : Incomplete entity reference, '" << std::string(pc, std::next(pc, 4)) << "'\n";
+                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), 4) << "'\n";
                     return 1;
                 }
                 characters = "&";
