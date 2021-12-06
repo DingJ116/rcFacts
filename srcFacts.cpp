@@ -76,6 +76,12 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
     return buffer.cbegin();
 }
 
+#ifdef TRACE
+#define TRACE(m,n) std::clog << m << ": |" << n << "|\n";
+#else
+#define TRACE(m,n)
+#endif
+
 int main() {
     const std::string_view XMLNS("xmlns");
     std::string url;
@@ -117,13 +123,16 @@ int main() {
                 return 1;
             }
             const std::string_view qname(&(*pc), pnameend - pc);
+            TRACE("Str Tag qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
             const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            TRACE("Str Tag prefix", prefix);
             if (colonpos != 0)
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            TRACE("Str Tag local_name", local_name);
             if (local_name == "expr")
                 ++expr_count;
             else if (local_name == "function")
@@ -168,13 +177,16 @@ int main() {
                 return 1;
             }
             const std::string_view qname(&(*pc), pnameend - pc);
+            TRACE("End Tag qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
             const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            TRACE("End Tag prefix", prefix);
             if (colonpos != 0)
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            TRACE("End Tag local_name", local_name);
             pc = std::next(endpc);
             --depth;
 
@@ -333,13 +345,16 @@ int main() {
             if (pnameend == std::next(endpc))
                 return 1;
             const std::string_view qname(&(*pc), pnameend - pc);
+            TRACE("ATTR qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
             const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            TRACE("ATTR prefix", prefix);
             if (colonpos != 0)
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            TRACE("ATTR local_name", local_name);
             pc = std::next(pnameend);
             pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (pc == buffer.cend()) {
@@ -358,6 +373,7 @@ int main() {
                 return 1;
             }
             const std::string_view value(&(*pc), &(*pvalueend) - &(*pc));
+            TRACE("ATTR value", value);
             if (local_name == "url")
                 url = value;
             pc = std::next(pvalueend);
@@ -384,6 +400,7 @@ int main() {
                     return 1;
             }
             const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
+            TRACE("CDATA", characters);
             textsize += (int) characters.size();
             loc += (int) std::count(characters.begin(), characters.end(), '\n');
             pc = std::next(endpc, endCDATA.size());
@@ -400,6 +417,7 @@ int main() {
                 }
             }
             const std::string_view comment(&(*pc), endpc - pc);
+            TRACE("Comment", comment);
             pc = std::next(endpc, endComment.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
         } else if (*pc != '<' && depth == 0) {
@@ -443,12 +461,14 @@ int main() {
                 characters = "&";
                 std::advance(pc, 1);
             }
+            TRACE("ENTREF", characters);
             ++textsize;
 
         } else if (*pc != '<') {
             // parse character non-entity references
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
+            TRACE("Characters", characters);
             loc += (int) std::count(characters.cbegin(), characters.cend(), '\n');
             textsize += (int) characters.size();
             pc = endpc;
