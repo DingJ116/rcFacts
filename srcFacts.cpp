@@ -217,7 +217,7 @@ int main() {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
             }
-            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            const std::string_view qname(&(*pc), pnameend - pc);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
@@ -244,7 +244,7 @@ int main() {
                 std::cerr << "parser error : Unterminated start tag '" << std::string(pc, pnameend) << "'\n";
                 return 1;
             }
-            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            const std::string_view qname(&(*pc), pnameend - pc);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
@@ -310,7 +310,7 @@ int main() {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            const std::string uri(pc, pvalueend);
+            const std::string_view uri(&(*pc), pnameend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
             if (intag && *pc == '>') {
@@ -327,7 +327,7 @@ int main() {
             std::string::const_iterator pnameend = std::find(pc, std::next(endpc), '=');
             if (pnameend == std::next(endpc))
                 return 1;
-            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            const std::string_view qname(&(*pc), pnameend - pc);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
                 colonpos = 0;
@@ -352,7 +352,7 @@ int main() {
                 std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
                 return 1;
             }
-            const std::string value(pc, pvalueend);
+            const std::string_view value(&(*pc), &(*pvalueend) - &(*pc));
             if (local_name == "url")
                 url = value;
             pc = std::next(pvalueend);
@@ -376,7 +376,7 @@ int main() {
                 if (endpc == buffer.cend())
                     return 1;
             }
-            const std::string characters(pc, endpc);
+            const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
             textsize += (int) characters.size();
             loc += (int) std::count(characters.begin(), characters.end(), '\n');
             pc = std::next(endpc, strlen("]]>"));
@@ -403,7 +403,7 @@ int main() {
             }
         } else if (*pc == '&') {
             // parse character entity references
-            char character;
+            std::string_view characters;
             if (std::distance(pc, buffer.cend()) < 3) {
                pc = refillBuffer(pc, buffer, total);
                if (std::distance(pc, buffer.cend()) < 3) {
@@ -412,10 +412,10 @@ int main() {
                }
             }
             if (*std::next(pc) == 'l' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
-                character = '<';
+                characters = "<";
                 std::advance(pc, strlen("&lt;"));
             } else if (*std::next(pc) == 'g' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
-                character = '>';
+                characters = ">";
                 std::advance(pc, strlen("&gt;"));
             } else if (*std::next(pc) == 'a' && *std::next(pc, 2) == 'm' && *std::next(pc, 3) == 'p') {
                 if (std::distance(pc, buffer.cend()) < 4) {
@@ -426,14 +426,13 @@ int main() {
                     }
                 }
                 if (*std::next(pc, 4) != ';') {
-                    const std::string partialEntity(pc, std::next(pc, 4));
-                    std::cerr << "parser error : Incomplete entity reference, '" << partialEntity << "'\n";
+                    std::cerr << "parser error : Incomplete entity reference, '" << std::string(pc, std::next(pc, 4)) << "'\n";
                     return 1;
                 }
-                character = '&';
+                characters = "&";
                 std::advance(pc, strlen("&amp;"));
             } else {
-                character = '&';
+                characters = "&";
                 std::advance(pc, 1);
             }
             ++textsize;
