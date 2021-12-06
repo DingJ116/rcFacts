@@ -124,7 +124,6 @@ int main() {
             if (colonpos != 0)
                 colonpos += 1;
             const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
-            pc = pnameend;
             if (local_name == "expr")
                 ++expr_count;
             else if (local_name == "function")
@@ -139,6 +138,7 @@ int main() {
                 ++comment_count;
             if (!isArchive && depth == 1 && local_name == "unit" )
                 isArchive = true;
+            pc = pnameend;
             pc = std::find_if_not(pc, std::next(endpc), isspace);
             intag = true;
             if (intag && *pc == '>') {
