@@ -327,18 +327,14 @@ int main() {
             std::string::const_iterator pnameend = std::find(pc, std::next(endpc), '=');
             if (pnameend == std::next(endpc))
                 return 1;
-            const std::string qname(pc, pnameend);
-            const auto colonpos = qname.find(':');
-            std::string prefixbase;
-            if (colonpos != std::string::npos)
-                prefixbase = qname.substr(0, colonpos);
-            const std::string prefix = std::move(prefixbase);
-            std::string local_namebase;
-            if (colonpos != std::string::npos)
-                local_namebase = qname.substr(colonpos + 1);
-            else
-                local_namebase = qname;
-            std::string local_name = std::move(local_namebase);
+            const std::string_view qname(&(*pc), &(*pnameend) - &(*pc));
+            size_t colonpos = qname.find(':');
+            if (colonpos == std::string::npos)
+                colonpos = 0;
+            const std::string_view prefix(&(*qname.cbegin()), colonpos);
+            if (colonpos != 0)
+                colonpos += 1;
+            const std::string_view local_name(&(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             pc = std::next(pnameend);
             pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
             if (pc == buffer.cend()) {
