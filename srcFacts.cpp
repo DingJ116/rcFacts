@@ -117,7 +117,7 @@ int main() {
                 return 1;
             }
             std::string::const_iterator pnameend = std::find(pc, endpc, '=');
-            const std::string attr(pc, pnameend);
+            const std::string_view attr(&(*pc), pnameend - pc);
             pc = pnameend;
             std::advance(pc, 1);
             char delim = *pc;
@@ -135,7 +135,7 @@ int main() {
                 std::cerr << "parser error: Missing required first attribute version in XML declaration\n";
                 return 1;
             }
-            const std::string version(pc, pvalueend);
+            const std::string_view version(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
             // parse encoding
@@ -148,7 +148,7 @@ int main() {
                 std::cerr << "parser error: Incomple encoding in XML declaration\n";
                 return 1;
             }
-            const std::string attr2(pc, pnameend);
+            const std::string_view attr2(&(*pc), pnameend - pc);
             pc = pnameend;
             std::advance(pc, 1);
             char delim2 = *pc;
@@ -166,7 +166,7 @@ int main() {
                 std::cerr << "parser error: Missing required encoding in XML declaration\n";
                 return 1;
             }
-            const std::string encoding(pc, pvalueend);
+            const std::string_view encoding(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
             // parse standalone
@@ -175,7 +175,7 @@ int main() {
                 return 1;
             }
             pnameend = std::find(pc, endpc, '=');
-            const std::string attr3(pc, pnameend);
+            const std::string_view attr3(&(*pc), pnameend - pc);
             pc = pnameend;
             std::advance(pc, 1);
             char delim3 = *pc;
@@ -193,7 +193,7 @@ int main() {
                 std::cerr << "parser error : Missing attribute standalone in XML declaration\n";
                 return 1;
             }
-            const std::string standalone(pc, pvalueend);
+            const std::string_view standalone(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, [] (char c) { return isspace(c); });
             std::advance(pc, strlen("?>"));
@@ -287,12 +287,12 @@ int main() {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            pc = pnameend;
-            std::string prefix;
+            int prefixSize = 0;
             if (*pc == ':') {
                 std::advance(pc, 1);
-                prefix.assign(pc, pnameend);
+                prefixSize = pnameend - pc;
             }
+            const std::string_view prefix(&(*pc), prefixSize);
             pc = std::next(pnameend);
             pc = std::find_if_not(pc, std::next(endpc), [] (char c) { return isspace(c); });
             if (pc == std::next(endpc)) {
