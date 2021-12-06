@@ -367,19 +367,20 @@ int main() {
             }
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '[') {
             // parse CDATA
-            const std::string_view endcdata = "]]>";
-            std::advance(pc, strlen("<![CDATA["));
-            std::string::const_iterator endpc = std::search(pc, buffer.cend(), endcdata.begin(), endcdata.end());
+            const std::string_view startCDATA = "<![CDATA[";
+            const std::string_view endCDATA = "]]>";
+            std::advance(pc, startCDATA.size());
+            std::string::const_iterator endpc = std::search(pc, buffer.cend(), endCDATA.begin(), endCDATA.end());
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
-                endpc = std::search(pc, buffer.cend(), endcdata.begin(), endcdata.end());
+                endpc = std::search(pc, buffer.cend(), endCDATA.begin(), endCDATA.end());
                 if (endpc == buffer.cend())
                     return 1;
             }
             const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
             textsize += (int) characters.size();
             loc += (int) std::count(characters.begin(), characters.end(), '\n');
-            pc = std::next(endpc, strlen("]]>"));
+            pc = std::next(endpc, endCDATA.size());
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
             const std::string_view endcomment = "-->";
