@@ -26,6 +26,7 @@
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
+#include <chrono>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -87,6 +88,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
 #endif
 
 int main() {
+    auto start = std::chrono::steady_clock::now();
     const std::string_view XMLNS("xmlns");
     std::string url;
     int textsize = 0;
@@ -480,23 +482,29 @@ int main() {
             pc = endpc;
         }
     }
+    auto finish = std::chrono::steady_clock::now();
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
+    double mlocPerSec = loc / elapsed_seconds / 1000000;
     int files = unit_count;
     if (isArchive)
         --files;
     std::locale cpploc{""};
     std::cout.imbue(cpploc);
-    int width = std::max(5, (int)(log10(total) * 1.3 + 1));
+    int valueWidth = std::max(5, (int)(log10(total) * 1.3 + 1));
     std::cout << "# srcFacts: " << url << '\n';
-    std::cout << "| Measure      | " << std::setw(width + 3) << "Value |\n";
-    std::cout << "|:-------------|-" << std::setw(width + 3) << std::setfill('-') << ":|\n" << std::setfill(' ');
-    std::cout << "| srcML bytes  | " << std::setw(width) << total          << " |\n";
-    std::cout << "| Characters   | " << std::setw(width) << textsize       << " |\n";
-    std::cout << "| Files        | " << std::setw(width) << files          << " |\n";
-    std::cout << "| LOC          | " << std::setw(width) << loc            << " |\n";
-    std::cout << "| Classes      | " << std::setw(width) << class_count    << " |\n";
-    std::cout << "| Functions    | " << std::setw(width) << function_count << " |\n";
-    std::cout << "| Declarations | " << std::setw(width) << decl_count     << " |\n";
-    std::cout << "| Expressions  | " << std::setw(width) << expr_count     << " |\n";
-    std::cout << "| Comments     | " << std::setw(width) << comment_count  << " |\n";
+    std::cout << "| Measure      | " << std::setw(valueWidth + 3) << "Value |\n";
+    std::cout << "|:-------------|-" << std::setw(valueWidth + 3) << std::setfill('-') << ":|\n" << std::setfill(' ');
+    std::cout << "| srcML bytes  | " << std::setw(valueWidth) << total          << " |\n";
+    std::cout << "| Characters   | " << std::setw(valueWidth) << textsize       << " |\n";
+    std::cout << "| Files        | " << std::setw(valueWidth) << files          << " |\n";
+    std::cout << "| LOC          | " << std::setw(valueWidth) << loc            << " |\n";
+    std::cout << "| Classes      | " << std::setw(valueWidth) << class_count    << " |\n";
+    std::cout << "| Functions    | " << std::setw(valueWidth) << function_count << " |\n";
+    std::cout << "| Declarations | " << std::setw(valueWidth) << decl_count     << " |\n";
+    std::cout << "| Expressions  | " << std::setw(valueWidth) << expr_count     << " |\n";
+    std::cout << "| Comments     | " << std::setw(valueWidth) << comment_count  << " |\n";
+    std::clog << "\n";
+    std::clog << std::setprecision(2) << elapsed_seconds << " sec\n";
+    std::clog << std::setprecision(2) << mlocPerSec << " MLOC/sec\n";
     return 0;
 }
