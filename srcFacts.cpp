@@ -402,8 +402,8 @@ int main() {
             }
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '[') {
             // parse CDATA
-            const std::string_view startCDATA = "<![CDATA[";
-            const std::string_view endCDATA = "]]>";
+            constexpr std::string_view startCDATA = "<![CDATA[";
+            constexpr std::string_view endCDATA = "]]>";
             std::advance(pc, startCDATA.size());
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endCDATA.begin(), endCDATA.end());
             if (endpc == buffer.cend()) {
@@ -419,7 +419,7 @@ int main() {
             pc = std::next(endpc, endCDATA.size());
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
-            const std::string_view endComment = "-->";
+            constexpr std::string_view endComment = "-->";
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
