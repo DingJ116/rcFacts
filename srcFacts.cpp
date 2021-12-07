@@ -23,6 +23,9 @@
 #include <ctype.h>
 #include <string_view>
 #include <optional>
+#include <iomanip>
+#include <cmath>
+#include <algorithm>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -482,17 +485,18 @@ int main() {
         --files;
     std::locale cpploc{""};
     std::cout.imbue(cpploc);
+    int width = std::max(5, (int)(log10(total) * 1.3 + 1));
     std::cout << "# srcFacts: " << url << '\n';
-    std::cout << "| Item | Count |\n";
-    std::cout << "|:-----|-----:|\n";
-    std::cout << "| srcML bytes | " << total << " |\n";
-    std::cout << "| Characters | " << textsize << " |\n";
-    std::cout << "| Files | " << files << " |\n";
-    std::cout << "| LOC | " << loc << " |\n";
-    std::cout << "| Classes | " << class_count << " |\n";
-    std::cout << "| Functions | " << function_count << " |\n";
-    std::cout << "| Declarations | " << decl_count << " |\n";
-    std::cout << "| Expressions | " << expr_count << " |\n";
-    std::cout << "| Comments | " << comment_count << " |\n";
+    std::cout << "| Measure      | " << std::setw(width + 3) << "Value |\n";
+    std::cout << "|:-------------|-" << std::setw(width + 3) << std::setfill('-') << ":|\n" << std::setfill(' ');
+    std::cout << "| srcML bytes  | " << std::setw(width) << total          << " |\n";
+    std::cout << "| Characters   | " << std::setw(width) << textsize       << " |\n";
+    std::cout << "| Files        | " << std::setw(width) << files          << " |\n";
+    std::cout << "| LOC          | " << std::setw(width) << loc            << " |\n";
+    std::cout << "| Classes      | " << std::setw(width) << class_count    << " |\n";
+    std::cout << "| Functions    | " << std::setw(width) << function_count << " |\n";
+    std::cout << "| Declarations | " << std::setw(width) << decl_count     << " |\n";
+    std::cout << "| Expressions  | " << std::setw(width) << expr_count     << " |\n";
+    std::cout << "| Comments     | " << std::setw(width) << comment_count  << " |\n";
     return 0;
 }
