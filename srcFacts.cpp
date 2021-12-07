@@ -93,7 +93,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
 
 int main() {
     auto start = std::chrono::steady_clock::now();
-    const std::string_view XMLNS("xmlns");
+    constexpr std::string_view XMLNS("xmlns");
     std::string url;
     int textsize = 0;
     int loc = 0;
@@ -202,8 +202,8 @@ int main() {
 
         } else if (*pc == '<' && *std::next(pc) == '?') {
             // parse XML declaration
-            const std::string_view startXMLDecl = "<?xml";
-            const std::string_view endXMLDecl = "?>";
+            constexpr std::string_view startXMLDecl = "<?xml";
+            constexpr std::string_view endXMLDecl = "?>";
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
                 pc = refillBuffer(pc, buffer, total);
@@ -449,26 +449,18 @@ int main() {
                     return 1;
                }
             }
-            if (*std::next(pc) == 'l' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
+            constexpr std::string_view LT = "&lt;";
+            constexpr std::string_view GT = "&gt;";
+            constexpr std::string_view AMP = "&amp;";
+            if (std::string_view(&(*pc), LT.size()) == LT) {
                 characters = "<";
-                std::advance(pc, strlen("&lt;"));
-            } else if (*std::next(pc) == 'g' && *std::next(pc, 2) == 't' && *std::next(pc, 3) == ';') {
+                std::advance(pc, LT.size());
+            } else if (std::string_view(&(*pc), GT.size()) == GT) {
                 characters = ">";
-                std::advance(pc, strlen("&gt;"));
-            } else if (*std::next(pc) == 'a' && *std::next(pc, 2) == 'm' && *std::next(pc, 3) == 'p') {
-                if (std::distance(pc, buffer.cend()) < 4) {
-                    pc = refillBuffer(pc, buffer, total);
-                    if (std::distance(pc, buffer.cend()) < 4) {
-                        std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), std::distance(pc, buffer.cend())) << "'\n";
-                        return 1;
-                    }
-                }
-                if (*std::next(pc, 4) != ';') {
-                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), 4) << "'\n";
-                    return 1;
-                }
+                std::advance(pc, GT.size());
+            } else if (std::string_view(&(*pc), AMP.size()) == AMP) {
                 characters = "&";
-                std::advance(pc, strlen("&amp;"));
+                std::advance(pc, AMP.size());
             } else {
                 characters = "&";
                 std::advance(pc, 1);
