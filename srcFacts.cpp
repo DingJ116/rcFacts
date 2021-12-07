@@ -238,7 +238,7 @@ int main() {
                 std::cerr << "parser error: Missing required first attribute version in XML declaration\n";
                 return 1;
             }
-            const std::string_view version(&(*pc), pvalueend - pc);
+            const std::string_view version(&(*pc), std::distance(pc, pvalueend));
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, isspace);
             // parse optional encoding and standalone attributes
@@ -264,9 +264,9 @@ int main() {
                     return 1;
                 }
                 if (attr2 == "encoding") {
-                    encoding = std::string_view(&(*pc), pvalueend - pc);
+                    encoding = std::string_view(&(*pc), std::distance(pc, pvalueend));
                 } else if (attr2 == "standalone") {
-                    standalone = std::string_view(&(*pc), pvalueend - pc);
+                    standalone = std::string_view(&(*pc), std::distance(pc, pvalueend));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
                     return 1;
@@ -294,7 +294,7 @@ int main() {
                     return 1;
                 }
                 if (attr2 == "standalone" && !standalone) {
-                    standalone = std::string_view(&(*pc), pvalueend - pc);
+                    standalone = std::string_view(&(*pc), std::distance(pc, pvalueend));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
                     return 1;
@@ -384,7 +384,7 @@ int main() {
                 std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
                 return 1;
             }
-            const std::string_view value(&(*pc), &(*pvalueend) - &(*pc));
+            const std::string_view value(&(*pc), std::distance(pc, pvalueend));
             TRACE("ATTR value", value);
             if (local_name == "url")
                 url = value;
@@ -411,7 +411,7 @@ int main() {
                 if (endpc == buffer.cend())
                     return 1;
             }
-            const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
+            const std::string_view characters(&(*pc), std::distance(pc, endpc));
             TRACE("CDATA", characters);
             textsize += (int) characters.size();
             loc += (int) std::count(characters.begin(), characters.end(), '\n');
@@ -428,7 +428,7 @@ int main() {
                     return 1;
                 }
             }
-            const std::string_view comment(&(*pc), endpc - pc);
+            const std::string_view comment(&(*pc), std::distance(pc, endpc));
             TRACE("Comment", comment);
             pc = std::next(endpc, endComment.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
@@ -445,7 +445,7 @@ int main() {
             if (std::distance(pc, buffer.cend()) < 3) {
                pc = refillBuffer(pc, buffer, total);
                if (std::distance(pc, buffer.cend()) < 3) {
-                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), buffer.cend() - pc) << "'\n";
+                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), std::distance(pc, buffer.cend())) << "'\n";
                     return 1;
                }
             }
@@ -459,7 +459,7 @@ int main() {
                 if (std::distance(pc, buffer.cend()) < 4) {
                     pc = refillBuffer(pc, buffer, total);
                     if (std::distance(pc, buffer.cend()) < 4) {
-                        std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), buffer.cend() - pc) << "'\n";
+                        std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(&(*pc), std::distance(pc, buffer.cend())) << "'\n";
                         return 1;
                     }
                 }
@@ -479,7 +479,7 @@ int main() {
         } else if (*pc != '<') {
             // parse character non-entity references
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
-            const std::string_view characters(&(*pc), &(*endpc) - &(*pc));
+            const std::string_view characters(&(*pc), std::distance(pc, endpc));
             TRACE("Characters", characters);
             loc += (int) std::count(characters.cbegin(), characters.cend(), '\n');
             textsize += (int) characters.size();
