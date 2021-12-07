@@ -251,7 +251,7 @@ int main() {
             std::advance(pc, 1);
             pvalueend = std::find(pc, endpc, delim2);
             if (pvalueend == endpc) {
-                std::cerr << "parser error: Incomple encoding in XML declaration\n";
+                std::cerr << "parser error: Incomplete encoding in XML declaration\n";
                 return 1;
             }
             if (attr2 != "encoding") {
