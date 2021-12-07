@@ -129,10 +129,10 @@ int main() {
             std::advance(pc, 1);
             std::string::const_iterator pnameend = std::find_if(pc, std::next(endpc), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
             if (pnameend == std::next(endpc)) {
-                std::cerr << "parser error : Unterminated start tag '" << std::string_view(&(*pc), pnameend - pc) << "'\n";
+                std::cerr << "parser error : Unterminated start tag '" << std::string_view(&(*pc), std::distance(pc, pnameend)) << "'\n";
                 return 1;
             }
-            const std::string_view qname(&(*pc), pnameend - pc);
+            const std::string_view qname(&(*pc), std::distance(pc, pnameend));
             TRACE("Str Tag qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
@@ -186,7 +186,7 @@ int main() {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
             }
-            const std::string_view qname(&(*pc), pnameend - pc);
+            const std::string_view qname(&(*pc), std::distance(pc, pnameend));
             TRACE("End Tag qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
@@ -221,7 +221,7 @@ int main() {
                 return 1;
             }
             std::string::const_iterator pnameend = std::find(pc, endpc, '=');
-            const std::string_view attr(&(*pc), pnameend - pc);
+            const std::string_view attr(&(*pc), std::distance(pc, pnameend));
             pc = std::next(pnameend);
             const char delim = *pc;
             if (delim != '"' && delim != '\'') {
@@ -250,7 +250,7 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute in XML declaration\n";
                     return 1;
                 }
-                const std::string_view attr2(&(*pc), pnameend - pc);
+                const std::string_view attr2(&(*pc), std::distance(pc, pnameend));
                 pc = std::next(pnameend);
                 char delim2 = *pc;
                 if (delim2 != '"' && delim2 != '\'') {
@@ -280,7 +280,7 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute in XML declaration\n";
                     return 1;
                 }
-                const std::string_view attr2(&(*pc), pnameend - pc);
+                const std::string_view attr2(&(*pc), std::distance(pc, pnameend));
                 pc = std::next(pnameend);
                 char delim2 = *pc;
                 if (delim2 != '"' && delim2 != '\'') {
@@ -318,7 +318,7 @@ int main() {
             int prefixSize = 0;
             if (*pc == ':') {
                 std::advance(pc, 1);
-                prefixSize = pnameend - pc;
+                prefixSize = std::distance(pc, pnameend);
             }
             const std::string_view prefix(&(*pc), prefixSize);
             pc = std::next(pnameend);
@@ -338,7 +338,7 @@ int main() {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            const std::string_view uri(&(*pc), pnameend - pc);
+            const std::string_view uri(&(*pc), std::distance(pc, pnameend));
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, std::next(endpc), isspace);
             if (intag && *pc == '>') {
@@ -356,7 +356,7 @@ int main() {
             std::string::const_iterator pnameend = std::find(pc, std::next(endpc), '=');
             if (pnameend == std::next(endpc))
                 return 1;
-            const std::string_view qname(&(*pc), pnameend - pc);
+            const std::string_view qname(&(*pc), std::distance(pc, pnameend));
             TRACE("ATTR qname", qname);
             size_t colonpos = qname.find(':');
             if (colonpos == std::string::npos)
