@@ -1,15 +1,18 @@
 /*
     srcFacts.cpp
 
-    Produces a report with various counts of the number of 
-    statements, declarations, etc. of a source code project
-    in C++, C, Java, and C#.
+    Produces a report with various measures of C++, C, Java,
+    and C# source-code.
 
     Input is an XML file in the srcML format.
 
-    Code includes an almost-complete XML parser. Limitations:
-    * DTD declarations are not handled
-    * Well-formedness is not checked
+    Output a markdown table with the measures.
+
+    Output performance statistics to stdlog.
+
+    Code includes an XML parser with some limitations:
+    * No checking for well-formedness
+    * No DTD declarations
 */
 
 #include <iostream>
