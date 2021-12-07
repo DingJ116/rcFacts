@@ -501,7 +501,7 @@ int main() {
     std::cout << "| Expressions  | " << std::setw(valueWidth) << exprCount     << " |\n";
     std::cout << "| Comments     | " << std::setw(valueWidth) << commentCount  << " |\n";
     std::clog << "\n";
-    std::clog << std::setprecision(2) << elapsed_seconds << " sec\n";
-    std::clog << std::setprecision(2) << mlocPerSec << " MLOC/sec\n";
+    std::clog << std::setprecision(3) << elapsed_seconds << " sec\n";
+    std::clog << std::setprecision(3) << mlocPerSec << " MLOC/sec\n";
     return 0;
 }
