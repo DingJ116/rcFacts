@@ -98,12 +98,12 @@ int main() {
     std::string url;
     int textsize = 0;
     int loc = 0;
-    int expr_count = 0;
-    int function_count = 0;
-    int class_count = 0;
-    int unit_count = 0;
-    int decl_count = 0;
-    int comment_count = 0;
+    int exprCount = 0;
+    int functionCount = 0;
+    int classCount = 0;
+    int unitCount = 0;
+    int declCount = 0;
+    int commentCount = 0;
     int depth = 0;
     long total = 0;
     bool intag = false;
@@ -145,17 +145,17 @@ int main() {
             const std::string_view local_name(std::addressof(*qname.cbegin()) + colonpos, qname.size() - colonpos);
             TRACE("Str Tag local_name", local_name);
             if (local_name == "expr")
-                ++expr_count;
+                ++exprCount;
             else if (local_name == "function")
-                ++function_count;
+                ++functionCount;
             else if (local_name == "decl")
-                ++decl_count;
+                ++declCount;
             else if (local_name == "class")
-                ++class_count;
+                ++classCount;
             else if (local_name == "unit")
-                ++unit_count;
+                ++unitCount;
             else if (local_name == "comment")
-                ++comment_count;
+                ++commentCount;
             if (!isArchive && depth == 1 && local_name == "unit" )
                 isArchive = true;
             pc = pnameend;
@@ -482,7 +482,7 @@ int main() {
     auto finish = std::chrono::steady_clock::now();
     auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
     double mlocPerSec = loc / elapsed_seconds / 1000000;
-    int files = unit_count;
+    int files = unitCount;
     if (isArchive)
         --files;
     std::locale cpploc{""};
@@ -495,11 +495,11 @@ int main() {
     std::cout << "| Characters   | " << std::setw(valueWidth) << textsize       << " |\n";
     std::cout << "| Files        | " << std::setw(valueWidth) << files          << " |\n";
     std::cout << "| LOC          | " << std::setw(valueWidth) << loc            << " |\n";
-    std::cout << "| Classes      | " << std::setw(valueWidth) << class_count    << " |\n";
-    std::cout << "| Functions    | " << std::setw(valueWidth) << function_count << " |\n";
-    std::cout << "| Declarations | " << std::setw(valueWidth) << decl_count     << " |\n";
-    std::cout << "| Expressions  | " << std::setw(valueWidth) << expr_count     << " |\n";
-    std::cout << "| Comments     | " << std::setw(valueWidth) << comment_count  << " |\n";
+    std::cout << "| Classes      | " << std::setw(valueWidth) << classCount    << " |\n";
+    std::cout << "| Functions    | " << std::setw(valueWidth) << functionCount << " |\n";
+    std::cout << "| Declarations | " << std::setw(valueWidth) << declCount     << " |\n";
+    std::cout << "| Expressions  | " << std::setw(valueWidth) << exprCount     << " |\n";
+    std::cout << "| Comments     | " << std::setw(valueWidth) << commentCount  << " |\n";
     std::clog << "\n";
     std::clog << std::setprecision(2) << elapsed_seconds << " sec\n";
     std::clog << std::setprecision(2) << mlocPerSec << " MLOC/sec\n";
