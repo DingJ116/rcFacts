@@ -30,6 +30,7 @@
 #include <cmath>
 #include <algorithm>
 #include <chrono>
+#include <memory>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
