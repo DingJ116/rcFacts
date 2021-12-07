@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <string_view>
+#include <optional>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -231,63 +232,67 @@ int main() {
             const std::string_view version(&(*pc), pvalueend - pc);
             pc = std::next(pvalueend);
             pc = std::find_if_not(pc, endpc, isspace);
-            // parse encoding
-            if (pc == endpc) {
-                std::cerr << "parser error: Missing required encoding in XML declaration\n";
-                return 1;
+            // parse optional encoding and standalone attributes
+            std::optional<std::string_view> encoding;
+            std::optional<std::string_view> standalone;
+            if (pc != (endpc - endXMLDecl.size())) {
+                pnameend = std::find(pc, endpc, '=');
+                if (pnameend == endpc) {
+                    std::cerr << "parser error: Incomplete attribute in XML declaration\n";
+                    return 1;
+                }
+                const std::string_view attr2(&(*pc), pnameend - pc);
+                pc = std::next(pnameend);
+                char delim2 = *pc;
+                if (delim2 != '"' && delim2 != '\'') {
+                    std::cerr << "parser error: Invalid end delimiter for attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                std::advance(pc, 1);
+                pvalueend = std::find(pc, endpc, delim2);
+                if (pvalueend == endpc) {
+                    std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                if (attr2 == "encoding") {
+                    encoding = std::string_view(&(*pc), pvalueend - pc);
+                } else if (attr2 == "standalone") {
+                    standalone = std::string_view(&(*pc), pvalueend - pc);
+                } else {
+                    std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                pc = std::next(pvalueend);
+                pc = std::find_if_not(pc, endpc, isspace);
             }
-            pnameend = std::find(pc, endpc, '=');
-            if (pnameend == endpc) {
-                std::cerr << "parser error: Incomple encoding in XML declaration\n";
-                return 1;
+            if (pc != (endpc - endXMLDecl.size() + 1)) {
+                pnameend = std::find(pc, endpc, '=');
+                if (pnameend == endpc) {
+                    std::cerr << "parser error: Incomplete attribute in XML declaration\n";
+                    return 1;
+                }
+                const std::string_view attr2(&(*pc), pnameend - pc);
+                pc = std::next(pnameend);
+                char delim2 = *pc;
+                if (delim2 != '"' && delim2 != '\'') {
+                    std::cerr << "parser error: Invalid end delimiter for attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                std::advance(pc, 1);
+                pvalueend = std::find(pc, endpc, delim2);
+                if (pvalueend == endpc) {
+                    std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                if (attr2 == "standalone" && !standalone) {
+                    standalone = std::string_view(&(*pc), pvalueend - pc);
+                } else {
+                    std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
+                    return 1;
+                }
+                pc = std::next(pvalueend);
+                pc = std::find_if_not(pc, endpc, isspace);
             }
-            const std::string_view attr2(&(*pc), pnameend - pc);
-            pc = std::next(pnameend);
-            char delim2 = *pc;
-            if (delim2 != '"' && delim2 != '\'') {
-                std::cerr << "parser error: Invalid end delimiter for encoding in XML declaration\n";
-                return 1;
-            }
-            std::advance(pc, 1);
-            pvalueend = std::find(pc, endpc, delim2);
-            if (pvalueend == endpc) {
-                std::cerr << "parser error: Incomplete encoding in XML declaration\n";
-                return 1;
-            }
-            if (attr2 != "encoding") {
-                std::cerr << "parser error: Missing required encoding in XML declaration\n";
-                return 1;
-            }
-            const std::string_view encoding(&(*pc), pvalueend - pc);
-            pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, endpc, isspace);
-            // parse standalone
-            if (pc == endpc) {
-                std::cerr << "parser error: Missing required third attribute standalone in XML declaration\n";
-                return 1;
-            }
-            pnameend = std::find(pc, endpc, '=');
-            const std::string_view attr3(&(*pc), pnameend - pc);
-            pc = pnameend;
-            std::advance(pc, 1);
-            char delim3 = *pc;
-            if (delim3 != '"' && delim3 != '\'') {
-                std::cerr << "parser error : Missing attribute standalone delimiter in XML declaration\n";
-                return 1;
-            }
-            std::advance(pc, 1);
-            pvalueend = std::find(pc, endpc, delim3);
-            if (pvalueend == endpc) {
-                std::cerr << "parser error : Missing attribute standalone in XML declaration\n";
-                return 1;
-            }
-            if (attr3 != "standalone") {
-                std::cerr << "parser error : Missing attribute standalone in XML declaration\n";
-                return 1;
-            }
-            const std::string_view standalone(&(*pc), pvalueend - pc);
-            pc = std::next(pvalueend);
-            pc = std::find_if_not(pc, endpc, isspace);
             std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
 
