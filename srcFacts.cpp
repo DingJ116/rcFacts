@@ -56,13 +56,13 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
 */
 std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::string& buffer, long& totalBytes) {
 
-    // find number of unprocessed characters [pc, buffer.cend())
+    // number of unprocessed characters [pc, buffer.cend())
     size_t d = std::distance(pc, buffer.cend());
 
     // move unprocessed characters, [pc, buffer.cend()), to start of the buffer
     std::copy(pc, buffer.cend(), buffer.begin());
 
-    // read in trying to read whole blocks
+    // read in whole blocks
     ssize_t numbytes = 0;
     while (((numbytes = READ(0, (void*)(buffer.data() + d), (size_t)(buffer.size() - d))) == (ssize_t) -1) &&
         (errno == EINTR)) {
@@ -74,10 +74,11 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
     if (numbytes == 0)
         return buffer.cend();
 
+    // resize down to current size
     if ((std::string::size_type) (numbytes + d) < buffer.size())
         buffer.resize(numbytes + d);
 
-    // update with number of bytes read
+    // update total number of bytes read
     totalBytes += (long) numbytes;
 
     // return iterator to first part of buffer
