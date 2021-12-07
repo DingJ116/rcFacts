@@ -485,14 +485,14 @@ int main() {
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Item | Count |\n";
     std::cout << "|:-----|-----:|\n";
-    std::cout << "| srcML | " << total << " |\n";
-    std::cout << "| files | " << files << " |\n";
+    std::cout << "| srcML bytes | " << total << " |\n";
+    std::cout << "| Characters | " << textsize << " |\n";
+    std::cout << "| Files | " << files << " |\n";
     std::cout << "| LOC | " << loc << " |\n";
-    std::cout << "| characters | " << textsize << " |\n";
-    std::cout << "| classes | " << class_count << " |\n";
-    std::cout << "| functions | " << function_count << " |\n";
-    std::cout << "| declarations | " << decl_count << " |\n";
-    std::cout << "| expressions | " << expr_count << " |\n";
-    std::cout << "| comments | " << comment_count << " |\n";
+    std::cout << "| Classes | " << class_count << " |\n";
+    std::cout << "| Functions | " << function_count << " |\n";
+    std::cout << "| Declarations | " << decl_count << " |\n";
+    std::cout << "| Expressions | " << expr_count << " |\n";
+    std::cout << "| Comments | " << comment_count << " |\n";
     return 0;
 }
