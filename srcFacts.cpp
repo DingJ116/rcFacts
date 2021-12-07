@@ -65,7 +65,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
 
     // read in whole blocks
     ssize_t numbytes = 0;
-    while (((numbytes = READ(0, (void*)(buffer.data() + d), (size_t)(buffer.size() - d))) == (ssize_t) -1) &&
+    while (((numbytes = READ(0, (void*)(buffer.data() + d), (size_t)(buffer.size() - d))) == static_cast<ssize_t>(-1)) &&
         (errno == EINTR)) {
     }
     // error in read
