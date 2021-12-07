@@ -80,7 +80,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
         buffer.resize(numbytes + d);
 
     // update total number of bytes read
-    totalBytes += (long) numbytes;
+    totalBytes += static_cast<long>(numbytes);
 
     // return iterator to first part of buffer
     return buffer.cbegin();
@@ -306,7 +306,7 @@ int main() {
             std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
 
-        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > (int) XMLNS.size() && std::string_view(std::addressof(*pc), XMLNS.size()) == XMLNS
+        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*pc), XMLNS.size()) == XMLNS
             && (*std::next(pc, XMLNS.size()) == ':' || *std::next(pc, XMLNS.size()) == '=')) {
             // parse namespace
             std::advance(pc, XMLNS.size());
@@ -414,8 +414,8 @@ int main() {
             }
             const std::string_view characters(std::addressof(*pc), std::distance(pc, endpc));
             TRACE("CDATA", characters);
-            textsize += (int) characters.size();
-            loc += (int) std::count(characters.begin(), characters.end(), '\n');
+            textsize += static_cast<int>(characters.size());
+            loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
             pc = std::next(endpc, endCDATA.size());
         } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
@@ -474,8 +474,8 @@ int main() {
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(std::addressof(*pc), std::distance(pc, endpc));
             TRACE("Characters", characters);
-            loc += (int) std::count(characters.cbegin(), characters.cend(), '\n');
-            textsize += (int) characters.size();
+            loc += static_cast<int>(std::count(characters.cbegin(), characters.cend(), '\n'));
+            textsize += static_cast<int>(characters.size());
             pc = endpc;
         }
     }
@@ -487,7 +487,7 @@ int main() {
         --files;
     std::locale cpploc{""};
     std::cout.imbue(cpploc);
-    int valueWidth = std::max(5, (int)(log10(total) * 1.3 + 1));
+    int valueWidth = std::max(5, static_cast<int>(log10(total) * 1.3 + 1));
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Measure      | " << std::setw(valueWidth + 3) << "Value |\n";
     std::cout << "|:-------------|-" << std::setw(valueWidth + 3) << std::setfill('-') << ":|\n" << std::setfill(' ');
