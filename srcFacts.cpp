@@ -463,18 +463,16 @@ int main() {
         } else if (*cursor == '&') {
             // parse character entity references
             std::string_view characters;
-            constexpr std::string_view LT = "&lt;";
-            constexpr std::string_view GT = "&gt;";
-            constexpr std::string_view AMP = "&amp;";
-            if (std::string_view(std::addressof(*cursor), LT.size()) == LT) {
+            constexpr std::string_view AMP = "&amp;"sv;
+            if (*std::next(cursor) == 'l' && *std::next(cursor, 2) == 't' && *std::next(cursor, 3) == ';') {
                 characters = "<";
-                std::advance(cursor, LT.size());
-            } else if (std::string_view(std::addressof(*cursor), GT.size()) == GT) {
+                std::advance(cursor, 4);
+            } else if (*std::next(cursor) == 'g' && *std::next(cursor, 2) == 't' && *std::next(cursor, 3) == ';') {
                 characters = ">";
-                std::advance(cursor, GT.size());
-            } else if (std::string_view(std::addressof(*cursor), AMP.size()) == AMP) {
+                std::advance(cursor, 4);
+            } else if (*std::next(cursor) == 'a' && *std::next(cursor, 2) == 'm' && *std::next(cursor, 3) == 'p' && *std::next(cursor, 4) == ';') {
                 characters = "&";
-                std::advance(cursor, AMP.size());
+                std::advance(cursor, 5);
             } else {
                 characters = "&";
                 std::advance(cursor, 1);
