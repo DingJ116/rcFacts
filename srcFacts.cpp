@@ -170,7 +170,7 @@ int main() {
                 std::advance(pc, 2);
                 intag = false;
             }
-        } else if (*pc == '<' && *std::next(pc) == '/') {
+        } else if (*std::next(pc) == '/' && *pc == '<') {
             // parse end tag
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
@@ -201,7 +201,7 @@ int main() {
             pc = std::next(endpc);
             --depth;
 
-        } else if (*pc == '<' && *std::next(pc) == '?') {
+        } else if (*std::next(pc) == '?' && *pc == '<') {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
             constexpr std::string_view endXMLDecl = "?>";
@@ -306,7 +306,7 @@ int main() {
             std::advance(pc, endXMLDecl.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
 
-        } else if (intag && *pc != '>' && *pc != '/' && std::distance(pc, buffer.cend()) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*pc), XMLNS.size()) == XMLNS
+        } else if (intag && std::distance(pc, buffer.cend()) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*pc), XMLNS.size()) == XMLNS
             && (*std::next(pc, XMLNS.size()) == ':' || *std::next(pc, XMLNS.size()) == '=')) {
             // parse namespace
             std::advance(pc, XMLNS.size());
@@ -400,7 +400,7 @@ int main() {
                 std::advance(pc, 2);
                 intag = false;
             }
-        } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '[') {
+        } else if (*std::next(pc) == '!' && *pc == '<' && *std::next(pc, 2) == '[') {
             // parse CDATA
             constexpr std::string_view startCDATA = "<![CDATA[";
             constexpr std::string_view endCDATA = "]]>";
@@ -417,7 +417,7 @@ int main() {
             textsize += static_cast<int>(characters.size());
             loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
             pc = std::next(endpc, endCDATA.size());
-        } else if (*pc == '<' && *std::next(pc) == '!' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
+        } else if (*std::next(pc) == '!' && *pc == '<' && *std::next(pc, 2) == '-' && *std::next(pc, 3) == '-') {
             // parse XML comment
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
@@ -433,7 +433,7 @@ int main() {
             TRACE("Comment", comment);
             pc = std::next(endpc, endComment.size());
             pc = std::find_if_not(pc, buffer.cend(), isspace);
-        } else if (*pc != '<' && depth == 0) {
+        } else if (depth == 0 && *pc != '<') {
             // parse characters before or after XML
             pc = std::find_if_not(pc, buffer.cend(), isspace);
             if (pc == buffer.cend() || !isspace(*pc)) {
@@ -443,13 +443,13 @@ int main() {
         } else if (*pc == '&') {
             // parse character entity references
             std::string_view characters;
-            if (std::distance(pc, buffer.cend()) < 3) {
-               pc = refillBuffer(pc, buffer, total);
-               if (std::distance(pc, buffer.cend()) < 3) {
-                    std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(std::addressof(*pc), std::distance(pc, buffer.cend())) << "'\n";
-                    return 1;
-               }
-            }
+            // if (std::distance(pc, buffer.cend()) < 3) {
+            //    pc = refillBuffer(pc, buffer, total);
+            //    if (std::distance(pc, buffer.cend()) < 3) {
+            //         std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(std::addressof(*pc), std::distance(pc, buffer.cend())) << "'\n";
+            //         return 1;
+            //    }
+            // }
             constexpr std::string_view LT = "&lt;";
             constexpr std::string_view GT = "&gt;";
             constexpr std::string_view AMP = "&amp;";
@@ -469,7 +469,7 @@ int main() {
             TRACE("ENTREF", characters);
             ++textsize;
 
-        } else if (*pc != '<') {
+        } else {
             // parse character non-entity references
             const std::string::const_iterator endpc = std::find_if(pc, buffer.cend(), [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(std::addressof(*pc), std::distance(pc, endpc));
