@@ -43,7 +43,7 @@ typedef SSIZE_T ssize_t;
 #define READ _read
 #endif
 
-// provides literal string operator""s
+// provides literal string operator""sv
 using namespace std::literals::string_view_literals;
 
 const int BUFFER_SIZE = 16 * 16 * 4096;
@@ -158,18 +158,18 @@ int main() {
             TRACE("Str Tag localName", localName);
             if (localName == "expr"sv) {
                 ++exprCount;
-            } else if (localName == "function"sv) {
-                ++functionCount;
             } else if (localName == "decl"sv) {
                 ++declCount;
-            } else if (localName == "class"sv) {
-                ++classCount;
             } else if (localName == "comment"sv) {
                 ++commentCount;
+            } else if (localName == "function"sv) {
+                ++functionCount;
             } else if (localName == "unit"sv) {
                 ++unitCount;
                 if (!isArchive && depth == 1)
                     isArchive = true;
+            } else if (localName == "class"sv) {
+                ++classCount;
             }
             cursor = nameEnd;
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
@@ -258,7 +258,7 @@ int main() {
                 std::cerr << "parser error: Invalid end delimiter for version in XML declaration\n";
                 return 1;
             }
-            if (attr != "version") {
+            if (attr != "version"sv) {
                 std::cerr << "parser error: Missing required first attribute version in XML declaration\n";
                 return 1;
             }
