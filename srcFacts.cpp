@@ -287,9 +287,9 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
                     return 1;
                 }
-                if (attr2 == "encoding") {
+                if (attr2 == "encoding"s) {
                     encoding = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
-                } else if (attr2 == "standalone") {
+                } else if (attr2 == "standalone"s) {
                     standalone = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
@@ -317,7 +317,7 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
                     return 1;
                 }
-                if (attr2 == "standalone" && !standalone) {
+                if (!standalone && attr2 == "standalone"s) {
                     standalone = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
@@ -410,7 +410,7 @@ int main() {
             }
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
             TRACE("ATTR value", value);
-            if (localName == "url")
+            if (localName == "url"s)
                 url = value;
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
