@@ -75,9 +75,8 @@ std::optional<std::string::const_iterator> refillBuffer(std::string::const_itera
     if (numberBytes == 0)
         return buffer.cend();
 
-    // resize down to current size
-    if ((std::string::size_type) (numberBytes + unprocessed) < buffer.size())
-        buffer.resize(numberBytes + unprocessed);
+    // pad the rest of the buffer with blanks (should be last call)
+    std::fill(&(buffer[numberBytes + unprocessed]), &(*buffer.end()), ' ');
 
     // update total number of bytes read
     totalBytes += static_cast<long>(numberBytes);
