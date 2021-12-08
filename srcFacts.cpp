@@ -244,13 +244,13 @@ int main() {
             std::string::const_iterator pnameend = std::find(cursor, endCursor, '=');
             const std::string_view attr(std::addressof(*cursor), std::distance(cursor, pnameend));
             cursor = std::next(pnameend);
-            const char delim = *cursor;
-            if (delim != '"' && delim != '\'') {
+            const char delimiter = *cursor;
+            if (delimiter != '"' && delimiter != '\'') {
                 std::cerr << "parser error: Invalid start delimiter for version in XML declaration\n";
                 return 1;
             }
             std::advance(cursor, 1);
-            std::string::const_iterator pvalueend = std::find(cursor, endCursor, delim);
+            std::string::const_iterator pvalueend = std::find(cursor, endCursor, delimiter);
             if (pvalueend == endCursor) {
                 std::cerr << "parser error: Invalid end delimiter for version in XML declaration\n";
                 return 1;
@@ -348,13 +348,13 @@ int main() {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            const char delim = *cursor;
-            if (delim != '"' && delim != '\'') {
+            const char delimiter = *cursor;
+            if (delimiter != '"' && delimiter != '\'') {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
             std::advance(cursor, 1);
-            std::string::const_iterator pvalueend = std::find(cursor, std::next(endCursor), delim);
+            std::string::const_iterator pvalueend = std::find(cursor, std::next(endCursor), delimiter);
             if (pvalueend == std::next(endCursor)) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
@@ -394,13 +394,13 @@ int main() {
                 std::cerr << "parser error : attribute " << qname << " incomplete attribute\n";
                 return 1;
             }
-            const char delim = *cursor;
-            if (delim != '"' && delim != '\'') {
+            const char delimiter = *cursor;
+            if (delimiter != '"' && delimiter != '\'') {
                 std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
                 return 1;
             }
             std::advance(cursor, 1);
-            std::string::const_iterator pvalueend = std::find(cursor, std::next(endCursor), delim);
+            std::string::const_iterator pvalueend = std::find(cursor, std::next(endCursor), delimiter);
             if (pvalueend == std::next(endCursor)) {
                 std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
                 return 1;
