@@ -143,30 +143,30 @@ int main() {
                 std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
             }
-            const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("Str Tag qname", qname);
-            size_t colonPosition = qname.find(':');
+            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            TRACE("Str Tag qName", qName);
+            size_t colonPosition = qName.find(':');
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
+            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
             TRACE("Str Tag prefix", prefix);
             if (colonPosition != 0)
                 colonPosition += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
-            TRACE("Str Tag local_name", local_name);
-            if (local_name == "expr")
+            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
+            TRACE("Str Tag localName", localName);
+            if (localName == "expr")
                 ++exprCount;
-            else if (local_name == "function")
+            else if (localName == "function")
                 ++functionCount;
-            else if (local_name == "decl")
+            else if (localName == "decl")
                 ++declCount;
-            else if (local_name == "class")
+            else if (localName == "class")
                 ++classCount;
-            else if (local_name == "unit")
+            else if (localName == "unit")
                 ++unitCount;
-            else if (local_name == "comment")
+            else if (localName == "comment")
                 ++commentCount;
-            if (!isArchive && depth == 1 && local_name == "unit" )
+            if (!isArchive && depth == 1 && localName == "unit" )
                 isArchive = true;
             cursor = nameEnd;
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
@@ -202,17 +202,17 @@ int main() {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
             }
-            const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("End Tag qname", qname);
-            size_t colonPosition = qname.find(':');
+            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            TRACE("End Tag qName", qName);
+            size_t colonPosition = qName.find(':');
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
+            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
             TRACE("End Tag prefix", prefix);
             if (colonPosition != 0)
                 colonPosition += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
-            TRACE("End Tag local_name", local_name);
+            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
+            TRACE("End Tag localName", localName);
             cursor = std::next(tagEnd);
             --depth;
 
@@ -377,37 +377,37 @@ int main() {
             std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd))
                 return 1;
-            const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("ATTR qname", qname);
-            size_t colonPosition = qname.find(':');
+            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            TRACE("ATTR qName", qName);
+            size_t colonPosition = qName.find(':');
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
+            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
             TRACE("ATTR prefix", prefix);
             if (colonPosition != 0)
                 colonPosition += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
-            TRACE("ATTR local_name", local_name);
+            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
+            TRACE("ATTR localName", localName);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
             if (cursor == buffer.cend()) {
-                std::cerr << "parser error : attribute " << qname << " incomplete attribute\n";
+                std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
                 return 1;
             }
             const char delimiter = *cursor;
             if (delimiter != '"' && delimiter != '\'') {
-                std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
+                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
                 return 1;
             }
             std::advance(cursor, 1);
             std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
             if (valueEnd == std::next(tagEnd)) {
-                std::cerr << "parser error : attribute " << qname << " missing delimiter\n";
+                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
                 return 1;
             }
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
             TRACE("ATTR value", value);
-            if (local_name == "url")
+            if (localName == "url")
                 url = value;
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
