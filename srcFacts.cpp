@@ -55,7 +55,7 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
     @param totalBytes Updated total bytes read
     @return Iterator to beginning of refilled buffer
 */
-std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::string& buffer, long& totalBytes) {
+std::optional<std::string::const_iterator> refillBuffer(std::string::const_iterator pc, std::string& buffer, long& totalBytes) {
 
     // number of unprocessed characters [pc, buffer.cend())
     size_t d = std::distance(pc, buffer.cend());
@@ -70,7 +70,7 @@ std::string::const_iterator refillBuffer(std::string::const_iterator pc, std::st
     }
     // error in read
     if (numbytes == -1)
-        return buffer.cend();
+        return std::nullopt;
     // EOF
     if (numbytes == 0)
         return buffer.cend();
@@ -113,14 +113,24 @@ int main() {
     while (true) {
         if (std::distance(pc, buffer.cend()) < 5) {
             // refill buffer and adjust iterator
-            pc = refillBuffer(pc, buffer, total);
+            auto tpc = refillBuffer(pc, buffer, total);
+            if (!tpc) {
+                std::cerr << "parser error : File input error\n";
+                return 1;
+            }
+            pc = *tpc;
             if (pc == buffer.cend())
                 break;
         } else if (*pc == '<' && *std::next(pc) != '/' && *std::next(pc) != '?') {
             // parse start tag
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
+                auto tpc = refillBuffer(pc, buffer, total);
+                if (!tpc) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                pc = *tpc;
                 endpc = std::find(pc, buffer.cend(), '>');
                 if (endpc == buffer.cend()) {
                     std::cerr << "parser error: Incomplete element start tag\n";
@@ -174,7 +184,12 @@ int main() {
             // parse end tag
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
+                auto tpc = refillBuffer(pc, buffer, total);
+                if (!tpc) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                pc = *tpc;
                 endpc = std::find(pc, buffer.cend(), '>');
                 if (endpc == buffer.cend()) {
                     std::cerr << "parser error: Incomplete element end tag\n";
@@ -207,7 +222,12 @@ int main() {
             constexpr std::string_view endXMLDecl = "?>";
             std::string::const_iterator endpc = std::find(pc, buffer.cend(), '>');
             if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
+                auto tpc = refillBuffer(pc, buffer, total);
+                if (!tpc) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                pc = *tpc;
                 endpc = std::find(pc, buffer.cend(), '>');
                 if (endpc == buffer.cend()) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
@@ -407,7 +427,12 @@ int main() {
             std::advance(pc, startCDATA.size());
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endCDATA.begin(), endCDATA.end());
             if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
+                auto tpc = refillBuffer(pc, buffer, total);
+                if (!tpc) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                pc = *tpc;
                 endpc = std::search(pc, buffer.cend(), endCDATA.begin(), endCDATA.end());
                 if (endpc == buffer.cend())
                     return 1;
@@ -422,7 +447,12 @@ int main() {
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
             if (endpc == buffer.cend()) {
-                pc = refillBuffer(pc, buffer, total);
+                auto tpc = refillBuffer(pc, buffer, total);
+                if (!tpc) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                pc = *tpc;
                 endpc = std::search(pc, buffer.cend(), endComment.begin(), endComment.end());
                 if (endpc == buffer.cend()) {
                     std::cerr << "parser error : Unterminated XML comment\n";
