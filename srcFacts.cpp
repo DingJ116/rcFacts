@@ -58,7 +58,7 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
     @param totalBytes Updated total bytes read
     @return Iterator to beginning of refilled buffer
 */
-std::optional<std::string::const_iterator> refillBuffer(std::string::const_iterator cursor, std::string& buffer, long& totalBytes) {
+bool refillBuffer(std::string::const_iterator& cursor, std::string& buffer, long& totalBytes) {
 
     // number of unprocessed characters [cursor, buffer.cend())
     size_t unprocessed = std::distance(cursor, buffer.cend());
@@ -73,10 +73,12 @@ std::optional<std::string::const_iterator> refillBuffer(std::string::const_itera
     }
     // error in read
     if (numberBytes == -1)
-        return std::nullopt;
+        return false;
     // EOF
-    if (numberBytes == 0)
-        return buffer.cend();
+    if (numberBytes == 0) {
+        cursor = buffer.cend();
+        return true;
+    }
 
     // pad the rest of the buffer with blanks (should be last call)
     std::fill(&(buffer[numberBytes + unprocessed]), &(*buffer.end()), ' ');
@@ -84,8 +86,9 @@ std::optional<std::string::const_iterator> refillBuffer(std::string::const_itera
     // update total number of bytes read
     totalBytes += static_cast<long>(numberBytes);
 
-    // return iterator to first part of buffer
-    return buffer.cbegin();
+    cursor = buffer.cbegin();
+
+    return true;
 }
 
 #ifdef TRACE
@@ -115,24 +118,20 @@ int main() {
     while (true) {
         if (std::distance(cursor, buffer.cend()) < 5) {
             // refill buffer and adjust iterator
-            auto optCursor = refillBuffer(cursor, buffer, total);
-            if (!optCursor) {
+            if (!refillBuffer(cursor, buffer, total)) {
                 std::cerr << "parser error : File input error\n";
                 return 1;
             }
-            cursor = *optCursor;
             if (cursor == buffer.cend())
                 break;
         } else if (*cursor == '<' && *std::next(cursor) != '/' && *std::next(cursor) != '?') {
             // parse start tag
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                auto optCursor = refillBuffer(cursor, buffer, total);
-                if (!optCursor) {
+                if (!refillBuffer(cursor, buffer, total)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                cursor = *optCursor;
                 tagEnd = std::find(cursor, buffer.cend(), '>');
                 if (tagEnd == buffer.cend()) {
                     std::cerr << "parser error: Incomplete element start tag\n";
@@ -187,12 +186,10 @@ int main() {
             // parse end tag
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                auto optCursor = refillBuffer(cursor, buffer, total);
-                if (!optCursor) {
+                if (!refillBuffer(cursor, buffer, total)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                cursor = *optCursor;
                 tagEnd = std::find(cursor, buffer.cend(), '>');
                 if (tagEnd == buffer.cend()) {
                     std::cerr << "parser error: Incomplete element end tag\n";
@@ -225,12 +222,10 @@ int main() {
             constexpr std::string_view endXMLDecl = "?>";
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                auto optCursor = refillBuffer(cursor, buffer, total);
-                if (!optCursor) {
+                if (!refillBuffer(cursor, buffer, total)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                cursor = *optCursor;
                 tagEnd = std::find(cursor, buffer.cend(), '>');
                 if (tagEnd == buffer.cend()) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
@@ -430,12 +425,10 @@ int main() {
             std::advance(cursor, startCDATA.size());
             std::string::const_iterator tagEnd = std::search(cursor, buffer.cend(), endCDATA.begin(), endCDATA.end());
             if (tagEnd == buffer.cend()) {
-                auto optCursor = refillBuffer(cursor, buffer, total);
-                if (!optCursor) {
+                if (!refillBuffer(cursor, buffer, total)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                cursor = *optCursor;
                 tagEnd = std::search(cursor, buffer.cend(), endCDATA.begin(), endCDATA.end());
                 if (tagEnd == buffer.cend())
                     return 1;
@@ -450,12 +443,10 @@ int main() {
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator tagEnd = std::search(cursor, buffer.cend(), endComment.begin(), endComment.end());
             if (tagEnd == buffer.cend()) {
-                auto optCursor = refillBuffer(cursor, buffer, total);
-                if (!optCursor) {
+                if (!refillBuffer(cursor, buffer, total)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                cursor = *optCursor;
                 tagEnd = std::search(cursor, buffer.cend(), endComment.begin(), endComment.end());
                 if (tagEnd == buffer.cend()) {
                     std::cerr << "parser error : Unterminated XML comment\n";
