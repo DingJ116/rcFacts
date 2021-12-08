@@ -64,23 +64,23 @@ std::optional<std::string::const_iterator> refillBuffer(std::string::const_itera
     std::copy(cursor, buffer.cend(), buffer.begin());
 
     // read in whole blocks
-    ssize_t numbytes = 0;
-    while (((numbytes = READ(0, static_cast<void*>(buffer.data() + unprocessed),
+    ssize_t numberBytes = 0;
+    while (((numberBytes = READ(0, static_cast<void*>(buffer.data() + unprocessed),
         static_cast<size_t>(buffer.size() - unprocessed))) == static_cast<ssize_t>(-1)) && (errno == EINTR)) {
     }
     // error in read
-    if (numbytes == -1)
+    if (numberBytes == -1)
         return std::nullopt;
     // EOF
-    if (numbytes == 0)
+    if (numberBytes == 0)
         return buffer.cend();
 
     // resize down to current size
-    if ((std::string::size_type) (numbytes + unprocessed) < buffer.size())
-        buffer.resize(numbytes + unprocessed);
+    if ((std::string::size_type) (numberBytes + unprocessed) < buffer.size())
+        buffer.resize(numberBytes + unprocessed);
 
     // update total number of bytes read
-    totalBytes += static_cast<long>(numbytes);
+    totalBytes += static_cast<long>(numberBytes);
 
     // return iterator to first part of buffer
     return buffer.cbegin();
