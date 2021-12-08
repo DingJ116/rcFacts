@@ -145,14 +145,14 @@ int main() {
             }
             const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("Str Tag qname", qname);
-            size_t colonpos = qname.find(':');
-            if (colonpos == std::string::npos)
-                colonpos = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonpos);
+            size_t colonPosition = qname.find(':');
+            if (colonPosition == std::string::npos)
+                colonPosition = 0;
+            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
             TRACE("Str Tag prefix", prefix);
-            if (colonpos != 0)
-                colonpos += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            if (colonPosition != 0)
+                colonPosition += 1;
+            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
             TRACE("Str Tag local_name", local_name);
             if (local_name == "expr")
                 ++exprCount;
@@ -204,14 +204,14 @@ int main() {
             }
             const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("End Tag qname", qname);
-            size_t colonpos = qname.find(':');
-            if (colonpos == std::string::npos)
-                colonpos = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonpos);
+            size_t colonPosition = qname.find(':');
+            if (colonPosition == std::string::npos)
+                colonPosition = 0;
+            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
             TRACE("End Tag prefix", prefix);
-            if (colonpos != 0)
-                colonpos += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            if (colonPosition != 0)
+                colonPosition += 1;
+            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
             TRACE("End Tag local_name", local_name);
             cursor = std::next(tagEnd);
             --depth;
@@ -379,14 +379,14 @@ int main() {
                 return 1;
             const std::string_view qname(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("ATTR qname", qname);
-            size_t colonpos = qname.find(':');
-            if (colonpos == std::string::npos)
-                colonpos = 0;
-            const std::string_view prefix(std::addressof(*qname.cbegin()), colonpos);
+            size_t colonPosition = qname.find(':');
+            if (colonPosition == std::string::npos)
+                colonPosition = 0;
+            const std::string_view prefix(std::addressof(*qname.cbegin()), colonPosition);
             TRACE("ATTR prefix", prefix);
-            if (colonpos != 0)
-                colonpos += 1;
-            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonpos, qname.size() - colonpos);
+            if (colonPosition != 0)
+                colonPosition += 1;
+            const std::string_view local_name(std::addressof(*qname.cbegin()) + colonPosition, qname.size() - colonPosition);
             TRACE("ATTR local_name", local_name);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
