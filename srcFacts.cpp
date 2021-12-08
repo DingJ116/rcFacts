@@ -81,7 +81,7 @@ bool refillBuffer(std::string::const_iterator& cursor, std::string& buffer, long
     }
 
     // pad the rest of the buffer with blanks (should be last call)
-    std::fill(&(buffer[numberBytes + unprocessed]), &(*buffer.end()), ' ');
+    std::fill(&(buffer[numberBytes + unprocessed]), std::addressof(*buffer.end()), ' ');
 
     // update total number of bytes read
     totalBytes += static_cast<long>(numberBytes);
