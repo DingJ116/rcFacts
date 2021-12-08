@@ -465,10 +465,6 @@ int main() {
         } else if (depth == 0 && *cursor != '<') {
             // parse characters before or after XML
             cursor = std::find_if_not(cursor, buffer.cend(), isspace);
-            if (cursor == buffer.cend() || !isspace(*cursor)) {
-                std::cerr << "parser error : Start tag expected, '<' not found\n";
-                return 1;
-            }
         } else if (*cursor == '&') {
             // parse character entity references
             std::string_view characters;
