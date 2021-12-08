@@ -44,7 +44,7 @@ typedef SSIZE_T ssize_t;
 #endif
 
 // provides literal string operator""s
-using namespace std::string_literals;
+using namespace std::literals::string_view_literals;
 
 const int BUFFER_SIZE = 16 * 16 * 4096;
 
@@ -156,17 +156,17 @@ int main() {
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
             TRACE("Str Tag localName", localName);
-            if (localName == "expr"s) {
+            if (localName == "expr"sv) {
                 ++exprCount;
-            } else if (localName == "function"s) {
+            } else if (localName == "function"sv) {
                 ++functionCount;
-            } else if (localName == "decl"s) {
+            } else if (localName == "decl"sv) {
                 ++declCount;
-            } else if (localName == "class"s) {
+            } else if (localName == "class"sv) {
                 ++classCount;
-            } else if (localName == "comment"s) {
+            } else if (localName == "comment"sv) {
                 ++commentCount;
-            } else if (localName == "unit"s) {
+            } else if (localName == "unit"sv) {
                 ++unitCount;
                 if (!isArchive && depth == 1)
                     isArchive = true;
@@ -287,9 +287,9 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
                     return 1;
                 }
-                if (attr2 == "encoding"s) {
+                if (attr2 == "encoding"sv) {
                     encoding = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
-                } else if (attr2 == "standalone"s) {
+                } else if (attr2 == "standalone"sv) {
                     standalone = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
@@ -317,7 +317,7 @@ int main() {
                     std::cerr << "parser error: Incomplete attribute " << attr2 << " in XML declaration\n";
                     return 1;
                 }
-                if (!standalone && attr2 == "standalone"s) {
+                if (!standalone && attr2 == "standalone"sv) {
                     standalone = std::string_view(std::addressof(*cursor), std::distance(cursor, valueEnd));
                 } else {
                     std::cerr << "parser error: Invalid attribute " << attr2 << " in XML declaration\n";
@@ -410,7 +410,7 @@ int main() {
             }
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
             TRACE("ATTR value", value);
-            if (localName == "url"s)
+            if (localName == "url"sv)
                 url = value;
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
