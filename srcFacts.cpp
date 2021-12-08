@@ -463,13 +463,6 @@ int main() {
         } else if (*cursor == '&') {
             // parse character entity references
             std::string_view characters;
-            // if (std::distance(cursor, buffer.cend()) < 3) {
-            //    cursor = refillBuffer(cursor, buffer, total);
-            //    if (std::distance(cursor, buffer.cend()) < 3) {
-            //         std::cerr << "parser error : Incomplete entity reference, '" << std::string_view(std::addressof(*cursor), std::distance(cursor, buffer.cend())) << "'\n";
-            //         return 1;
-            //    }
-            // }
             constexpr std::string_view LT = "&lt;";
             constexpr std::string_view GT = "&gt;";
             constexpr std::string_view AMP = "&amp;";
