@@ -43,6 +43,9 @@ typedef SSIZE_T ssize_t;
 #define READ _read
 #endif
 
+// provides literal string operator""s
+using namespace std::string_literals;
+
 const int BUFFER_SIZE = 16 * 16 * 4096;
 
 /*
@@ -153,20 +156,21 @@ int main() {
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
             TRACE("Str Tag localName", localName);
-            if (localName == "expr")
+            if (localName == "expr"s) {
                 ++exprCount;
-            else if (localName == "function")
+            } else if (localName == "function"s) {
                 ++functionCount;
-            else if (localName == "decl")
+            } else if (localName == "decl"s) {
                 ++declCount;
-            else if (localName == "class")
+            } else if (localName == "class"s) {
                 ++classCount;
-            else if (localName == "unit")
-                ++unitCount;
-            else if (localName == "comment")
+            } else if (localName == "comment"s) {
                 ++commentCount;
-            if (!isArchive && depth == 1 && localName == "unit" )
-                isArchive = true;
+            } else if (localName == "unit"s) {
+                ++unitCount;
+                if (!isArchive && depth == 1)
+                    isArchive = true;
+            }
             cursor = nameEnd;
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
             intag = true;
