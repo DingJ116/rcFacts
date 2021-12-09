@@ -50,15 +50,17 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
 
 /*
     Refill the buffer preserving the unused data.
-    Characters [cursor, buffer.end()) are shifted left and new data
-    is added to the rest of the buffer.
+    Current content [cursor, cursorEnd) is shifted left and new data
+    appended to the rest of the buffer.
 
-    @param cursor Iterator to current position in buffer
-    @param buffer Container for characters
-    @param totalBytes Updated total bytes read
-    @return Iterator to beginning of refilled buffer
+    @param[in,out] cursor Iterator to current position in buffer
+    @param[in, out] cursorEnd Iterator to end of buffer for this read
+    @param[in, out] buffer Container for characters
+    @return Number of bytes read
+    @retval 0 EOF
+    @retval -1 Read error
 */
-bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterator& cursorEnd, std::string& buffer, long& totalBytes) {
+int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterator& cursorEnd, std::string& buffer) {
 
     // number of unprocessed characters [cursor, cursorEnd)
     size_t unprocessed = std::distance(cursor, cursorEnd);
@@ -73,23 +75,20 @@ bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterat
     }
     // error in read
     if (numberBytes == -1)
-        return false;
+        return -1;
     // EOF
     if (numberBytes == 0) {
         cursorEnd = buffer.cend();
         cursor = buffer.cend();
-        return true;
+        return 0;
     }
-
-    // update total number of bytes read
-    totalBytes += static_cast<long>(numberBytes);
 
     // adjust the end of the buffer
     cursorEnd = buffer.cbegin() + numberBytes + unprocessed;
 
     cursor = buffer.cbegin();
 
-    return true;
+    return numberBytes;
 }
 
 #ifdef TRACE
@@ -120,20 +119,24 @@ int main() {
     while (true) {
         if (std::distance(cursor, cursorEnd) < 5) {
             // refill buffer and adjust iterator
-            if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+            int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+            if (bytesRead < 0) {
                 std::cerr << "parser error : File input error\n";
                 return 1;
             }
+            totalBytes += bytesRead;
             if (cursor == cursorEnd)
                 break;
         } else if (*cursor == '<' && *std::next(cursor) != '/' && *std::next(cursor) != '?') {
             // parse start tag
             std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
-                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
+                totalBytes += bytesRead;
                 tagEnd = std::find(cursor, cursorEnd, '>');
                 if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete element start tag\n";
@@ -188,10 +191,12 @@ int main() {
             // parse end tag
             std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
-                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
+                totalBytes += bytesRead;
                 tagEnd = std::find(cursor, cursorEnd, '>');
                 if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete element end tag\n";
@@ -224,10 +229,12 @@ int main() {
             constexpr std::string_view endXMLDecl = "?>";
             std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
-                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
+                totalBytes += bytesRead;
                 tagEnd = std::find(cursor, cursorEnd, '>');
                 if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
@@ -427,10 +434,12 @@ int main() {
             std::advance(cursor, startCDATA.size());
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
             if (tagEnd == cursorEnd) {
-                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
+                totalBytes += bytesRead;
                 tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
                 if (tagEnd == cursorEnd)
                     return 1;
@@ -445,10 +454,12 @@ int main() {
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
             if (tagEnd == cursorEnd) {
-                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
+                totalBytes += bytesRead;
                 tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
                 if (tagEnd == cursorEnd) {
                     std::cerr << "parser error : Unterminated XML comment\n";
