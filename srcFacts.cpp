@@ -119,7 +119,6 @@ int main() {
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator cursor = buffer.cend();
     std::string::const_iterator cursorEnd = buffer.cend();
-    std::string::const_iterator tagEnd;
     while (true) {
         if (std::distance(cursor, cursorEnd) < 5) {
             // refill buffer and adjust iterator
@@ -134,7 +133,7 @@ int main() {
         } else if (inTag && (strncmp(std::addressof(*cursor), "xmlns", 5) == 0) && (cursor[5] == ':' || cursor[5] == '=')) {
             // parse XML namespace
             std::advance(cursor, 5);
-//            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : incomplete namespace\n";
@@ -179,7 +178,7 @@ int main() {
             }
         } else if (inTag) {
             // parse attribute
-//            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd))
                 return 1;
@@ -380,7 +379,7 @@ int main() {
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
-            tagEnd = std::find(cursor, cursorEnd, '>');
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
                 int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
                 if (bytesRead < 0) {
@@ -418,7 +417,7 @@ int main() {
             --depth;
         } else if (*cursor == '<') {
             // parse start tag
-            tagEnd = std::find(cursor, cursorEnd, '>');
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
                 int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
                 if (bytesRead < 0) {
