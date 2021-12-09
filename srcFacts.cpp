@@ -520,8 +520,7 @@ int main() {
     int files = unitCount;
     if (isArchive)
         --files;
-    std::locale cpploc{""};
-    std::cout.imbue(cpploc);
+    std::cout.imbue(std::locale{""});
     int valueWidth = std::max(5, static_cast<int>(log10(totalBytes) * 1.3 + 1));
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Measure      | " << std::setw(valueWidth + 3) << "Value |\n";
