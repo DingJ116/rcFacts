@@ -68,25 +68,27 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
     // move unprocessed characters, [cursor, cursorEnd), to start of the buffer
     std::copy(cursor, cursorEnd, buffer.begin());
 
+    // reset cursors
+    cursor = buffer.begin();
+    cursorEnd = cursor + unprocessed;
+
     // read in whole blocks
     ssize_t numberBytes = 0;
     while (((numberBytes = READ(0, static_cast<void*>(buffer.data() + unprocessed),
-        static_cast<size_t>(buffer.size() - unprocessed))) == static_cast<ssize_t>(-1)) && (errno == EINTR)) {
+        std::distance(cursorEnd, buffer.cend()))) == -1) && (errno == EINTR)) {
     }
     // error in read
     if (numberBytes == -1)
         return -1;
     // EOF
     if (numberBytes == 0) {
-        cursorEnd = buffer.cend();
         cursor = buffer.cend();
+        cursorEnd = buffer.cend();
         return 0;
     }
 
-    // adjust the end of the buffer
-    cursorEnd = buffer.cbegin() + numberBytes + unprocessed;
-
-    cursor = buffer.cbegin();
+    // adjust the end of the cursor to the new bytes
+    cursorEnd += numberBytes;
 
     return numberBytes;
 }
