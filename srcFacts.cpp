@@ -111,7 +111,7 @@ int main() {
     int commentCount = 0;
     int depth = 0;
     long totalBytes = 0;
-    bool intag = false;
+    bool inTag = false;
     bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator cursor = buffer.cend();
@@ -172,15 +172,15 @@ int main() {
             }
             cursor = nameEnd;
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            intag = true;
-            if (intag && *cursor == '>') {
+            inTag = true;
+            if (inTag && *cursor == '>') {
                 std::advance(cursor, 1);
-                intag = false;
+                inTag = false;
                 ++depth;
             }
-            if (intag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
                 std::advance(cursor, 2);
-                intag = false;
+                inTag = false;
             }
         } else if (*std::next(cursor) == '/' && *cursor == '<') {
             // parse end tag
@@ -324,7 +324,7 @@ int main() {
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, buffer.cend(), isspace);
 
-        } else if (intag && std::distance(cursor, buffer.cend()) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*cursor), XMLNS.size()) == XMLNS
+        } else if (inTag && std::distance(cursor, buffer.cend()) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*cursor), XMLNS.size()) == XMLNS
             && (*std::next(cursor, XMLNS.size()) == ':' || *std::next(cursor, XMLNS.size()) == '=')) {
             // parse namespace
             std::advance(cursor, XMLNS.size());
@@ -360,16 +360,16 @@ int main() {
             const std::string_view uri(std::addressof(*cursor), std::distance(cursor, nameEnd));
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (intag && *cursor == '>') {
+            if (inTag && *cursor == '>') {
                 std::advance(cursor, 1);
-                intag = false;
+                inTag = false;
                 ++depth;
             }
-            if (intag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
                 std::advance(cursor, 2);
-                intag = false;
+                inTag = false;
             }
-        } else if (intag) {
+        } else if (inTag) {
             // parse attribute
             const std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
@@ -409,14 +409,14 @@ int main() {
                 url = value;
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (intag && *cursor == '>') {
+            if (inTag && *cursor == '>') {
                 std::advance(cursor, 1);
-                intag = false;
+                inTag = false;
                 ++depth;
             }
-            if (intag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
                 std::advance(cursor, 2);
-                intag = false;
+                inTag = false;
             }
         } else if (*std::next(cursor) == '!' && *cursor == '<' && *std::next(cursor, 2) == '[') {
             // parse CDATA
