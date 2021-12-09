@@ -129,7 +129,7 @@ int main() {
             totalBytes += bytesRead;
             if (cursor == cursorEnd)
                 break;
-        } else if (*cursor == '<' && *std::next(cursor) != '/' && *std::next(cursor) != '?') {
+        } else if (*cursor == '<' && cursor[1] != '/' && cursor[1] != '?') {
             // parse start tag
             std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
@@ -184,11 +184,11 @@ int main() {
                 inTag = false;
                 ++depth;
             }
-            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
                 inTag = false;
             }
-        } else if (*std::next(cursor) == '/' && *cursor == '<') {
+        } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
             std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             if (tagEnd == cursorEnd) {
@@ -223,7 +223,7 @@ int main() {
             cursor = std::next(tagEnd);
             --depth;
 
-        } else if (*std::next(cursor) == '?' && *cursor == '<') {
+        } else if (cursor[1] == '?' && *cursor == '<') {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
             constexpr std::string_view endXMLDecl = "?>";
@@ -373,7 +373,7 @@ int main() {
                 inTag = false;
                 ++depth;
             }
-            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
                 inTag = false;
             }
@@ -422,11 +422,11 @@ int main() {
                 inTag = false;
                 ++depth;
             }
-            if (inTag && *cursor == '/' && *std::next(cursor) == '>') {
+            if (inTag && *cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
                 inTag = false;
             }
-        } else if (*std::next(cursor) == '!' && *cursor == '<' && *std::next(cursor, 2) == '[') {
+        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[') {
             // parse CDATA
             constexpr std::string_view startCDATA = "<![CDATA[";
             constexpr std::string_view endCDATA = "]]>";
@@ -447,7 +447,7 @@ int main() {
             textsize += static_cast<int>(characters.size());
             loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
             cursor = std::next(tagEnd, endCDATA.size());
-        } else if (*std::next(cursor) == '!' && *cursor == '<' && *std::next(cursor, 2) == '-' && *std::next(cursor, 3) == '-') {
+        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '-' && cursor[3] == '-') {
             // parse XML comment
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
@@ -473,14 +473,13 @@ int main() {
         } else if (*cursor == '&') {
             // parse character entity references
             std::string_view characters;
-            constexpr std::string_view AMP = "&amp;"sv;
-            if (*std::next(cursor) == 'l' && *std::next(cursor, 2) == 't' && *std::next(cursor, 3) == ';') {
+            if (cursor[1] == 'l' && cursor[2] == 't' && cursor[3] == ';') {
                 characters = "<";
                 std::advance(cursor, 4);
-            } else if (*std::next(cursor) == 'g' && *std::next(cursor, 2) == 't' && *std::next(cursor, 3) == ';') {
+            } else if (cursor[1] == 'g' && cursor[2] == 't' && cursor[3] == ';') {
                 characters = ">";
                 std::advance(cursor, 4);
-            } else if (*std::next(cursor) == 'a' && *std::next(cursor, 2) == 'm' && *std::next(cursor, 3) == 'p' && *std::next(cursor, 4) == ';') {
+            } else if (cursor[1] == 'a' && cursor[2] == 'm' && cursor[3] == 'p' && cursor[4] == ';') {
                 characters = "&";
                 std::advance(cursor, 5);
             } else {
