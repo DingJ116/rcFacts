@@ -58,13 +58,13 @@ const int BUFFER_SIZE = 16 * 16 * 4096;
     @param totalBytes Updated total bytes read
     @return Iterator to beginning of refilled buffer
 */
-bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterator& bufferEnd, std::string& buffer, long& totalBytes) {
+bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterator& cursorEnd, std::string& buffer, long& totalBytes) {
 
-    // number of unprocessed characters [cursor, bufferEnd)
-    size_t unprocessed = std::distance(cursor, bufferEnd);
+    // number of unprocessed characters [cursor, cursorEnd)
+    size_t unprocessed = std::distance(cursor, cursorEnd);
 
-    // move unprocessed characters, [cursor, bufferEnd), to start of the buffer
-    std::copy(cursor, bufferEnd, buffer.begin());
+    // move unprocessed characters, [cursor, cursorEnd), to start of the buffer
+    std::copy(cursor, cursorEnd, buffer.begin());
 
     // read in whole blocks
     ssize_t numberBytes = 0;
@@ -76,7 +76,7 @@ bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterat
         return false;
     // EOF
     if (numberBytes == 0) {
-        bufferEnd = buffer.cend();
+        cursorEnd = buffer.cend();
         cursor = buffer.cend();
         return true;
     }
@@ -85,7 +85,7 @@ bool refillBuffer(std::string::const_iterator& cursor, std::string::const_iterat
     totalBytes += static_cast<long>(numberBytes);
 
     // adjust the end of the buffer
-    bufferEnd = buffer.cbegin() + numberBytes + unprocessed;
+    cursorEnd = buffer.cbegin() + numberBytes + unprocessed;
 
     cursor = buffer.cbegin();
 
@@ -115,27 +115,27 @@ int main() {
     bool inTag = false;
     bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
-    std::string::const_iterator bufferEnd = buffer.cend();
     std::string::const_iterator cursor = buffer.cend();
+    std::string::const_iterator cursorEnd = buffer.cend();
     while (true) {
-        if (std::distance(cursor, bufferEnd) < 5) {
+        if (std::distance(cursor, cursorEnd) < 5) {
             // refill buffer and adjust iterator
-            if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                 std::cerr << "parser error : File input error\n";
                 return 1;
             }
-            if (cursor == bufferEnd)
+            if (cursor == cursorEnd)
                 break;
         } else if (*cursor == '<' && *std::next(cursor) != '/' && *std::next(cursor) != '?') {
             // parse start tag
-            std::string::const_iterator tagEnd = std::find(cursor, bufferEnd, '>');
-            if (tagEnd == bufferEnd) {
-                if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            if (tagEnd == cursorEnd) {
+                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                tagEnd = std::find(cursor, bufferEnd, '>');
-                if (tagEnd == bufferEnd) {
+                tagEnd = std::find(cursor, cursorEnd, '>');
+                if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete element start tag\n";
                     return 1;
                 }
@@ -186,14 +186,14 @@ int main() {
             }
         } else if (*std::next(cursor) == '/' && *cursor == '<') {
             // parse end tag
-            std::string::const_iterator tagEnd = std::find(cursor, bufferEnd, '>');
-            if (tagEnd == bufferEnd) {
-                if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            if (tagEnd == cursorEnd) {
+                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                tagEnd = std::find(cursor, bufferEnd, '>');
-                if (tagEnd == bufferEnd) {
+                tagEnd = std::find(cursor, cursorEnd, '>');
+                if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete element end tag\n";
                     return 1;
                 }
@@ -222,14 +222,14 @@ int main() {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
             constexpr std::string_view endXMLDecl = "?>";
-            std::string::const_iterator tagEnd = std::find(cursor, bufferEnd, '>');
-            if (tagEnd == bufferEnd) {
-                if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            if (tagEnd == cursorEnd) {
+                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                tagEnd = std::find(cursor, bufferEnd, '>');
-                if (tagEnd == bufferEnd) {
+                tagEnd = std::find(cursor, cursorEnd, '>');
+                if (tagEnd == cursorEnd) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
                     return 1;
                 }
@@ -324,13 +324,13 @@ int main() {
                 cursor = std::find_if_not(cursor, tagEnd, isspace);
             }
             std::advance(cursor, endXMLDecl.size());
-            cursor = std::find_if_not(cursor, bufferEnd, isspace);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
 
-        } else if (inTag && std::distance(cursor, bufferEnd) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*cursor), XMLNS.size()) == XMLNS
+        } else if (inTag && std::distance(cursor, cursorEnd) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*cursor), XMLNS.size()) == XMLNS
             && (*std::next(cursor, XMLNS.size()) == ':' || *std::next(cursor, XMLNS.size()) == '=')) {
             // parse namespace
             std::advance(cursor, XMLNS.size());
-            const std::string::const_iterator tagEnd = std::find(cursor, bufferEnd, '>');
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : incomplete namespace\n";
@@ -373,7 +373,7 @@ int main() {
             }
         } else if (inTag) {
             // parse attribute
-            const std::string::const_iterator tagEnd = std::find(cursor, bufferEnd, '>');
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd))
                 return 1;
@@ -390,7 +390,7 @@ int main() {
             TRACE("ATTR localName", localName);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (cursor == bufferEnd) {
+            if (cursor == cursorEnd) {
                 std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
                 return 1;
             }
@@ -425,14 +425,14 @@ int main() {
             constexpr std::string_view startCDATA = "<![CDATA[";
             constexpr std::string_view endCDATA = "]]>";
             std::advance(cursor, startCDATA.size());
-            std::string::const_iterator tagEnd = std::search(cursor, bufferEnd, endCDATA.begin(), endCDATA.end());
-            if (tagEnd == bufferEnd) {
-                if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
+            if (tagEnd == cursorEnd) {
+                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                tagEnd = std::search(cursor, bufferEnd, endCDATA.begin(), endCDATA.end());
-                if (tagEnd == bufferEnd)
+                tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
+                if (tagEnd == cursorEnd)
                     return 1;
             }
             const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
@@ -443,14 +443,14 @@ int main() {
         } else if (*std::next(cursor) == '!' && *cursor == '<' && *std::next(cursor, 2) == '-' && *std::next(cursor, 3) == '-') {
             // parse XML comment
             constexpr std::string_view endComment = "-->";
-            std::string::const_iterator tagEnd = std::search(cursor, bufferEnd, endComment.begin(), endComment.end());
-            if (tagEnd == bufferEnd) {
-                if (!refillBuffer(cursor, bufferEnd, buffer, totalBytes)) {
+            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
+            if (tagEnd == cursorEnd) {
+                if (!refillBuffer(cursor, cursorEnd, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
-                tagEnd = std::search(cursor, bufferEnd, endComment.begin(), endComment.end());
-                if (tagEnd == bufferEnd) {
+                tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
+                if (tagEnd == cursorEnd) {
                     std::cerr << "parser error : Unterminated XML comment\n";
                     return 1;
                 }
@@ -458,10 +458,10 @@ int main() {
             const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
             TRACE("Comment", comment);
             cursor = std::next(tagEnd, endComment.size());
-            cursor = std::find_if_not(cursor, bufferEnd, isspace);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (depth == 0 && *cursor != '<') {
             // parse characters before or after XML
-            cursor = std::find_if_not(cursor, bufferEnd, isspace);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (*cursor == '&') {
             // parse character entity references
             std::string_view characters;
@@ -484,7 +484,7 @@ int main() {
 
         } else {
             // parse character non-entity references
-            const std::string::const_iterator tagEnd = std::find_if(cursor, bufferEnd, [] (char c) { return c == '<' || c == '&'; });
+            const std::string::const_iterator tagEnd = std::find_if(cursor, cursorEnd, [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
             TRACE("Characters", characters);
             loc += static_cast<int>(std::count(characters.cbegin(), characters.cend(), '\n'));
