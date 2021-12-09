@@ -101,7 +101,6 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
 
 int main() {
     const auto start = std::chrono::steady_clock::now();
-    constexpr std::string_view XMLNS("xmlns");
     std::string url;
     int textsize = 0;
     int loc = 0;
@@ -332,10 +331,10 @@ int main() {
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
 
-        } else if (inTag && std::distance(cursor, cursorEnd) > static_cast<int>(XMLNS.size()) && std::string_view(std::addressof(*cursor), XMLNS.size()) == XMLNS
-            && (*std::next(cursor, XMLNS.size()) == ':' || *std::next(cursor, XMLNS.size()) == '=')) {
-            // parse namespace
-            std::advance(cursor, XMLNS.size());
+        } else if (inTag && std::string_view(std::addressof(*cursor), 5) == "xmlns"sv
+            && (cursor[5] == ':' || cursor[5] == '=')) {
+            // parse XML namespace
+            std::advance(cursor, 5);
             const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
             const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd)) {
@@ -426,11 +425,11 @@ int main() {
                 std::advance(cursor, 2);
                 inTag = false;
             }
-        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[') {
+        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '['
+                   && std::string_view(std::addressof(*cursor), 5) == "<!CDATA["sv) {
             // parse CDATA
-            constexpr std::string_view startCDATA = "<![CDATA[";
-            constexpr std::string_view endCDATA = "]]>";
-            std::advance(cursor, startCDATA.size());
+            constexpr std::string_view endCDATA = "]]>"sv;
+            std::advance(cursor, 9);
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
             if (tagEnd == cursorEnd) {
                 int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
