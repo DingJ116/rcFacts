@@ -110,7 +110,7 @@ int main() {
     int declCount = 0;
     int commentCount = 0;
     int depth = 0;
-    long total = 0;
+    long totalBytes = 0;
     bool intag = false;
     bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
@@ -118,7 +118,7 @@ int main() {
     while (true) {
         if (std::distance(cursor, buffer.cend()) < 5) {
             // refill buffer and adjust iterator
-            if (!refillBuffer(cursor, buffer, total)) {
+            if (!refillBuffer(cursor, buffer, totalBytes)) {
                 std::cerr << "parser error : File input error\n";
                 return 1;
             }
@@ -128,7 +128,7 @@ int main() {
             // parse start tag
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                if (!refillBuffer(cursor, buffer, total)) {
+                if (!refillBuffer(cursor, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
@@ -186,7 +186,7 @@ int main() {
             // parse end tag
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                if (!refillBuffer(cursor, buffer, total)) {
+                if (!refillBuffer(cursor, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
@@ -222,7 +222,7 @@ int main() {
             constexpr std::string_view endXMLDecl = "?>";
             std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
             if (tagEnd == buffer.cend()) {
-                if (!refillBuffer(cursor, buffer, total)) {
+                if (!refillBuffer(cursor, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
@@ -425,7 +425,7 @@ int main() {
             std::advance(cursor, startCDATA.size());
             std::string::const_iterator tagEnd = std::search(cursor, buffer.cend(), endCDATA.begin(), endCDATA.end());
             if (tagEnd == buffer.cend()) {
-                if (!refillBuffer(cursor, buffer, total)) {
+                if (!refillBuffer(cursor, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
@@ -443,7 +443,7 @@ int main() {
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator tagEnd = std::search(cursor, buffer.cend(), endComment.begin(), endComment.end());
             if (tagEnd == buffer.cend()) {
-                if (!refillBuffer(cursor, buffer, total)) {
+                if (!refillBuffer(cursor, buffer, totalBytes)) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
@@ -498,11 +498,11 @@ int main() {
         --files;
     std::locale cpploc{""};
     std::cout.imbue(cpploc);
-    int valueWidth = std::max(5, static_cast<int>(log10(total) * 1.3 + 1));
+    int valueWidth = std::max(5, static_cast<int>(log10(totalBytes) * 1.3 + 1));
     std::cout << "# srcFacts: " << url << '\n';
     std::cout << "| Measure      | " << std::setw(valueWidth + 3) << "Value |\n";
     std::cout << "|:-------------|-" << std::setw(valueWidth + 3) << std::setfill('-') << ":|\n" << std::setfill(' ');
-    std::cout << "| srcML bytes  | " << std::setw(valueWidth) << total          << " |\n";
+    std::cout << "| srcML bytes  | " << std::setw(valueWidth) << totalBytes          << " |\n";
     std::cout << "| Characters   | " << std::setw(valueWidth) << textsize       << " |\n";
     std::cout << "| Files        | " << std::setw(valueWidth) << files          << " |\n";
     std::cout << "| LOC          | " << std::setw(valueWidth) << loc            << " |\n";
