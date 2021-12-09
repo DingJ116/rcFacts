@@ -98,7 +98,7 @@ bool refillBuffer(std::string::const_iterator& cursor, std::string& buffer, long
 #endif
 
 int main() {
-    auto start = std::chrono::steady_clock::now();
+    const auto start = std::chrono::steady_clock::now();
     constexpr std::string_view XMLNS("xmlns");
     std::string url;
     int textsize = 0;
@@ -139,7 +139,7 @@ int main() {
                 }
             }
             std::advance(cursor, 1);
-            std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
+            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
@@ -165,7 +165,7 @@ int main() {
                 ++functionCount;
             } else if (localName == "unit"sv) {
                 ++unitCount;
-                if (!isArchive && depth == 1)
+                if (depth == 1)
                     isArchive = true;
             } else if (localName == "class"sv) {
                 ++classCount;
@@ -197,7 +197,7 @@ int main() {
                 }
             }
             std::advance(cursor, 2);
-            std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c); });
+            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c); });
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
@@ -301,7 +301,7 @@ int main() {
                 }
                 const std::string_view attr2(std::addressof(*cursor), std::distance(cursor, nameEnd));
                 cursor = std::next(nameEnd);
-                char delimiter2 = *cursor;
+                const char delimiter2 = *cursor;
                 if (delimiter2 != '"' && delimiter2 != '\'') {
                     std::cerr << "parser error: Invalid end delimiter for attribute " << attr2 << " in XML declaration\n";
                     return 1;
@@ -329,7 +329,7 @@ int main() {
             // parse namespace
             std::advance(cursor, XMLNS.size());
             const std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
-            std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
+            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
@@ -352,7 +352,7 @@ int main() {
                 return 1;
             }
             std::advance(cursor, 1);
-            std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
+            const std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
             if (valueEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
@@ -372,7 +372,7 @@ int main() {
         } else if (intag) {
             // parse attribute
             const std::string::const_iterator tagEnd = std::find(cursor, buffer.cend(), '>');
-            std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
+            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd))
                 return 1;
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
@@ -490,9 +490,9 @@ int main() {
             cursor = tagEnd;
         }
     }
-    auto finish = std::chrono::steady_clock::now();
-    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
-    double mlocPerSec = loc / elapsed_seconds / 1000000;
+    const auto finish = std::chrono::steady_clock::now();
+    const auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
+    const double mlocPerSec = loc / elapsed_seconds / 1000000;
     int files = unitCount;
     if (isArchive)
         --files;
