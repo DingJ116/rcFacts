@@ -139,8 +139,7 @@ int main() {
                     return 1;
                 }
                 totalBytes += bytesRead;
-                tagEnd = std::find(cursor, cursorEnd, '>');
-                if (tagEnd == cursorEnd) {
+                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
                     std::cerr << "parser error: Incomplete element start tag\n";
                     return 1;
                 }
@@ -199,8 +198,7 @@ int main() {
                     return 1;
                 }
                 totalBytes += bytesRead;
-                tagEnd = std::find(cursor, cursorEnd, '>');
-                if (tagEnd == cursorEnd) {
+                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
                     std::cerr << "parser error: Incomplete element end tag\n";
                     return 1;
                 }
@@ -237,8 +235,7 @@ int main() {
                     return 1;
                 }
                 totalBytes += bytesRead;
-                tagEnd = std::find(cursor, cursorEnd, '>');
-                if (tagEnd == cursorEnd) {
+                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
                     return 1;
                 }
@@ -442,8 +439,7 @@ int main() {
                     return 1;
                 }
                 totalBytes += bytesRead;
-                tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
-                if (tagEnd == cursorEnd)
+                if ((tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end())) == cursorEnd)
                     return 1;
             }
             const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
@@ -462,8 +458,7 @@ int main() {
                     return 1;
                 }
                 totalBytes += bytesRead;
-                tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
-                if (tagEnd == cursorEnd) {
+                if ((tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end())) == cursorEnd) {
                     std::cerr << "parser error : Unterminated XML comment\n";
                     return 1;
                 }
