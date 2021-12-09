@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <string.h>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -93,7 +94,7 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
     return numberBytes;
 }
 
-#ifdef TRACE
+#ifdef DOTRACE
 #define TRACE(m,n) std::clog << m << ": |" << n << "|\n";
 #else
 #define TRACE(m,n)
@@ -128,56 +129,41 @@ int main() {
             totalBytes += bytesRead;
             if (cursor == cursorEnd)
                 break;
-        } else if (*cursor == '<' && cursor[1] != '/' && cursor[1] != '?') {
-            // parse start tag
-            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            if (tagEnd == cursorEnd) {
-                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
-                if (bytesRead < 0) {
-                    std::cerr << "parser error : File input error\n";
-                    return 1;
-                }
-                totalBytes += bytesRead;
-                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
-                    std::cerr << "parser error: Incomplete element start tag\n";
-                    return 1;
-                }
-            }
-            std::advance(cursor, 1);
-            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
+        } else if (inTag && strncmp(std::addressof(*cursor), "xmlns", 5) && (cursor[5] == ':' || cursor[5] == '=')) {
+            // parse XML namespace
+            std::advance(cursor, 5);
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
             if (nameEnd == std::next(tagEnd)) {
-                std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
+                std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("Str Tag qName", qName);
-            size_t colonPosition = qName.find(':');
-            if (colonPosition == std::string::npos)
-                colonPosition = 0;
-            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
-            TRACE("Str Tag prefix", prefix);
-            if (colonPosition != 0)
-                colonPosition += 1;
-            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            TRACE("Str Tag localName", localName);
-            if (localName == "expr"sv) {
-                ++exprCount;
-            } else if (localName == "decl"sv) {
-                ++declCount;
-            } else if (localName == "comment"sv) {
-                ++commentCount;
-            } else if (localName == "function"sv) {
-                ++functionCount;
-            } else if (localName == "unit"sv) {
-                ++unitCount;
-                if (depth == 1)
-                    isArchive = true;
-            } else if (localName == "class"sv) {
-                ++classCount;
+            int prefixSize = 0;
+            if (*cursor == ':') {
+                std::advance(cursor, 1);
+                prefixSize = std::distance(cursor, nameEnd);
             }
-            cursor = nameEnd;
+            const std::string_view prefix(std::addressof(*cursor), prefixSize);
+            cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            inTag = true;
+            if (cursor == std::next(tagEnd)) {
+                std::cerr << "parser error : incomplete namespace\n";
+                return 1;
+            }
+            const char delimiter = *cursor;
+            if (delimiter != '"' && delimiter != '\'') {
+                std::cerr << "parser error : incomplete namespace\n";
+                return 1;
+            }
+            std::advance(cursor, 1);
+            const std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
+            if (valueEnd == std::next(tagEnd)) {
+                std::cerr << "parser error : incomplete namespace\n";
+                return 1;
+            }
+            const std::string_view uri(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            cursor = std::next(valueEnd);
+            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
             if (inTag && *cursor == '>') {
                 std::advance(cursor, 1);
                 inTag = false;
@@ -187,42 +173,56 @@ int main() {
                 std::advance(cursor, 2);
                 inTag = false;
             }
-        } else if (cursor[1] == '/' && *cursor == '<') {
-            // parse end tag
-            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            if (tagEnd == cursorEnd) {
-                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
-                if (bytesRead < 0) {
-                    std::cerr << "parser error : File input error\n";
-                    return 1;
-                }
-                totalBytes += bytesRead;
-                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
-                    std::cerr << "parser error: Incomplete element end tag\n";
-                    return 1;
-                }
-            }
-            std::advance(cursor, 2);
-            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c); });
-            if (nameEnd == std::next(tagEnd)) {
-                std::cerr << "parser error: Incomplete element end tag name\n";
+        } else if (inTag) {
+            // parse attribute
+            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
+            if (nameEnd == std::next(tagEnd))
                 return 1;
-            }
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("End Tag qName", qName);
+            TRACE("ATTR qName", qName);
             size_t colonPosition = qName.find(':');
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
             const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
-            TRACE("End Tag prefix", prefix);
+            TRACE("ATTR prefix", prefix);
             if (colonPosition != 0)
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            TRACE("End Tag localName", localName);
-            cursor = std::next(tagEnd);
-            --depth;
-
-        } else if (cursor[1] == '?' && *cursor == '<') {
+            TRACE("ATTR localName", localName);
+            cursor = std::next(nameEnd);
+            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
+            if (cursor == cursorEnd) {
+                std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
+                return 1;
+            }
+            const char delimiter = *cursor;
+            if (delimiter != '"' && delimiter != '\'') {
+                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
+                return 1;
+            }
+            std::advance(cursor, 1);
+            std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
+            if (valueEnd == std::next(tagEnd)) {
+                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
+                return 1;
+            }
+            const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
+            TRACE("ATTR value", value);
+            if (localName == "url"sv)
+                url = value;
+            cursor = std::next(valueEnd);
+            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
+            if (inTag && *cursor == '>') {
+                std::advance(cursor, 1);
+                inTag = false;
+                ++depth;
+            }
+            if (inTag && *cursor == '/' && cursor[1] == '>') {
+                std::advance(cursor, 2);
+                inTag = false;
+            }
+        } else if (cursor[1] == '?' && *cursor == '<' && (strncmp(std::addressof(*cursor), "<?xml", 5) == 0)) {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
             constexpr std::string_view endXMLDecl = "?>";
@@ -330,103 +330,7 @@ int main() {
             }
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
-
-        } else if (inTag && std::string_view(std::addressof(*cursor), 5) == "xmlns"sv
-            && (cursor[5] == ':' || cursor[5] == '=')) {
-            // parse XML namespace
-            std::advance(cursor, 5);
-            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
-            if (nameEnd == std::next(tagEnd)) {
-                std::cerr << "parser error : incomplete namespace\n";
-                return 1;
-            }
-            int prefixSize = 0;
-            if (*cursor == ':') {
-                std::advance(cursor, 1);
-                prefixSize = std::distance(cursor, nameEnd);
-            }
-            const std::string_view prefix(std::addressof(*cursor), prefixSize);
-            cursor = std::next(nameEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (cursor == std::next(tagEnd)) {
-                std::cerr << "parser error : incomplete namespace\n";
-                return 1;
-            }
-            const char delimiter = *cursor;
-            if (delimiter != '"' && delimiter != '\'') {
-                std::cerr << "parser error : incomplete namespace\n";
-                return 1;
-            }
-            std::advance(cursor, 1);
-            const std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
-            if (valueEnd == std::next(tagEnd)) {
-                std::cerr << "parser error : incomplete namespace\n";
-                return 1;
-            }
-            const std::string_view uri(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            cursor = std::next(valueEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (inTag && *cursor == '>') {
-                std::advance(cursor, 1);
-                inTag = false;
-                ++depth;
-            }
-            if (inTag && *cursor == '/' && cursor[1] == '>') {
-                std::advance(cursor, 2);
-                inTag = false;
-            }
-        } else if (inTag) {
-            // parse attribute
-            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
-            if (nameEnd == std::next(tagEnd))
-                return 1;
-            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("ATTR qName", qName);
-            size_t colonPosition = qName.find(':');
-            if (colonPosition == std::string::npos)
-                colonPosition = 0;
-            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
-            TRACE("ATTR prefix", prefix);
-            if (colonPosition != 0)
-                colonPosition += 1;
-            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            TRACE("ATTR localName", localName);
-            cursor = std::next(nameEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (cursor == cursorEnd) {
-                std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
-                return 1;
-            }
-            const char delimiter = *cursor;
-            if (delimiter != '"' && delimiter != '\'') {
-                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
-                return 1;
-            }
-            std::advance(cursor, 1);
-            std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
-            if (valueEnd == std::next(tagEnd)) {
-                std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
-                return 1;
-            }
-            const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
-            TRACE("ATTR value", value);
-            if (localName == "url"sv)
-                url = value;
-            cursor = std::next(valueEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (inTag && *cursor == '>') {
-                std::advance(cursor, 1);
-                inTag = false;
-                ++depth;
-            }
-            if (inTag && *cursor == '/' && cursor[1] == '>') {
-                std::advance(cursor, 2);
-                inTag = false;
-            }
-        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '['
-                   && std::string_view(std::addressof(*cursor), 5) == "<!CDATA["sv) {
+        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[' && (strncmp(std::addressof(cursor[3]), "CDATA[", 6) == 0)) {
             // parse CDATA
             constexpr std::string_view endCDATA = "]]>"sv;
             std::advance(cursor, 9);
@@ -466,7 +370,100 @@ int main() {
             TRACE("Comment", comment);
             cursor = std::next(tagEnd, endComment.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
-        } else if (depth == 0 && *cursor != '<') {
+        } else if (cursor[1] == '/' && *cursor == '<') {
+            // parse end tag
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            if (tagEnd == cursorEnd) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                totalBytes += bytesRead;
+                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
+                    std::cerr << "parser error: Incomplete element end tag\n";
+                    return 1;
+                }
+            }
+            std::advance(cursor, 2);
+            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c); });
+            if (nameEnd == std::next(tagEnd)) {
+                std::cerr << "parser error: Incomplete element end tag name\n";
+                return 1;
+            }
+            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            TRACE("End Tag qName", qName);
+            size_t colonPosition = qName.find(':');
+            if (colonPosition == std::string::npos)
+                colonPosition = 0;
+            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
+            TRACE("End Tag prefix", prefix);
+            if (colonPosition != 0)
+                colonPosition += 1;
+            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
+            TRACE("End Tag localName", localName);
+            cursor = std::next(tagEnd);
+            --depth;
+        } else if (*cursor == '<') {
+            // parse start tag
+            std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
+            if (tagEnd == cursorEnd) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                totalBytes += bytesRead;
+                if ((tagEnd = std::find(cursor, cursorEnd, '>')) == cursorEnd) {
+                    std::cerr << "parser error: Incomplete element start tag\n";
+                    return 1;
+                }
+            }
+            std::advance(cursor, 1);
+            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
+            if (nameEnd == std::next(tagEnd)) {
+                std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
+                return 1;
+            }
+            const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            TRACE("Str Tag qName", qName);
+            size_t colonPosition = qName.find(':');
+            if (colonPosition == std::string::npos)
+                colonPosition = 0;
+            const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
+            TRACE("Str Tag prefix", prefix);
+            if (colonPosition != 0)
+                colonPosition += 1;
+            const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
+            TRACE("Str Tag localName", localName);
+            if (localName == "expr"sv) {
+                ++exprCount;
+            } else if (localName == "decl"sv) {
+                ++declCount;
+            } else if (localName == "comment"sv) {
+                ++commentCount;
+            } else if (localName == "function"sv) {
+                ++functionCount;
+            } else if (localName == "unit"sv) {
+                ++unitCount;
+                if (depth == 1)
+                    isArchive = true;
+            } else if (localName == "class"sv) {
+                ++classCount;
+            }
+            cursor = nameEnd;
+            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
+            inTag = true;
+            if (inTag && *cursor == '>') {
+                std::advance(cursor, 1);
+                inTag = false;
+                ++depth;
+            }
+            if (inTag && *cursor == '/' && cursor[1] == '>') {
+                std::advance(cursor, 2);
+                inTag = false;
+            }
+        } else if (depth == 0) {
             // parse characters before or after XML
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (*cursor == '&') {
