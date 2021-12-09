@@ -32,6 +32,7 @@
 #include <chrono>
 #include <memory>
 #include <string.h>
+#include <stdlib.h>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -129,7 +130,7 @@ int main() {
             totalBytes += bytesRead;
             if (cursor == cursorEnd)
                 break;
-        } else if (inTag && strncmp(std::addressof(*cursor), "xmlns", 5) && (cursor[5] == ':' || cursor[5] == '=')) {
+        } else if (inTag && (strncmp(std::addressof(*cursor), "xmlns", 5) == 0) && (cursor[5] == ':' || cursor[5] == '=')) {
             // parse XML namespace
             std::advance(cursor, 5);
             const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
@@ -144,6 +145,7 @@ int main() {
                 prefixSize = std::distance(cursor, nameEnd);
             }
             const std::string_view prefix(std::addressof(*cursor), prefixSize);
+            TRACE("Namespace prefix", prefix);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
             if (cursor == std::next(tagEnd)) {
@@ -161,7 +163,8 @@ int main() {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
-            const std::string_view uri(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            const std::string_view uri(std::addressof(*cursor), std::distance(cursor, valueEnd));
+            TRACE("Namespace uri", uri);
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
             if (inTag && *cursor == '>') {
@@ -386,7 +389,7 @@ int main() {
                 }
             }
             std::advance(cursor, 2);
-            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c); });
+            const std::string::const_iterator nameEnd = std::find_if_not(cursor, std::next(tagEnd), [] (char c) { return isalnum(c) || c == ':' || c == '_' || c == '-' || c == '.'; });
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error: Incomplete element end tag name\n";
                 return 1;
@@ -420,12 +423,16 @@ int main() {
                 }
             }
             std::advance(cursor, 1);
-            const std::string::const_iterator nameEnd = std::find_if(cursor, std::next(tagEnd), [] (char c) { return c == '>' || isspace(c) || c == '/'; });
+            const std::string::const_iterator nameEnd = std::find_if_not(cursor, std::next(tagEnd), [] (char c) { return isalnum(c) || c == ':' || c == '_' || c == '-' || c == '.'; });
             if (nameEnd == std::next(tagEnd)) {
                 std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
             }
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            if (qName.empty()) {
+                std::cerr << "parser error: StartTag: invalid element name\n";
+                return 1;
+            }
             TRACE("Str Tag qName", qName);
             size_t colonPosition = qName.find(':');
             if (colonPosition == std::string::npos)
