@@ -75,24 +75,24 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
     cursorEnd = cursor + unprocessed;
 
     // read in whole blocks
-    ssize_t numberBytes = 0;
-    while (((numberBytes = READ(0, static_cast<void*>(buffer.data() + unprocessed),
+    ssize_t readBytes = 0;
+    while (((readBytes = READ(0, static_cast<void*>(buffer.data() + unprocessed),
         std::distance(cursorEnd, buffer.cend()))) == -1) && (errno == EINTR)) {
     }
-    // error in read
-    if (numberBytes == -1)
+    if (readBytes == -1)
+        // error in read
         return -1;
-    // EOF
-    if (numberBytes == 0) {
+    if (readBytes == 0) {
+        // EOF
         cursor = buffer.cend();
         cursorEnd = buffer.cend();
         return 0;
     }
 
     // adjust the end of the cursor to the new bytes
-    cursorEnd += numberBytes;
+    cursorEnd += readBytes;
 
-    return numberBytes;
+    return readBytes;
 }
 
 #ifdef DOTRACE
