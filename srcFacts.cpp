@@ -185,6 +185,10 @@ int main() {
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("ATTR qName", qName);
             size_t colonPosition = qName.find(':');
+            if (colonPosition == 0) {
+                std::cerr << "parser error : Invalid attribute name\n";
+                return 1;
+            }
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
             const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
@@ -397,6 +401,10 @@ int main() {
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("End Tag qName", qName);
             size_t colonPosition = qName.find(':');
+            if (colonPosition == 0) {
+                std::cerr << "parser error : Invalid end tag name\n";
+                return 1;
+            }
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
             const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
@@ -435,6 +443,10 @@ int main() {
             }
             TRACE("Str Tag qName", qName);
             size_t colonPosition = qName.find(':');
+            if (colonPosition == 0) {
+                std::cerr << "parser error : Invalid start tag name\n";
+                return 1;
+            }
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
             const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
