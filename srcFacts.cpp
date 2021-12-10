@@ -167,12 +167,11 @@ int main() {
             TRACE("NAMESPACE uri", uri);
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (inTag && *cursor == '>') {
+            if (*cursor == '>') {
                 std::advance(cursor, 1);
                 inTag = false;
                 ++depth;
-            }
-            if (inTag && *cursor == '/' && cursor[1] == '>') {
+            } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
                 inTag = false;
             }
@@ -221,12 +220,11 @@ int main() {
             cursor = std::next(valueEnd);
             if (isspace(*cursor))
                 cursor = std::find_if_not(std::next(cursor), std::next(tagEnd), isspace);
-            if (inTag && *cursor == '>') {
+            if (*cursor == '>') {
                 std::advance(cursor, 1);
                 inTag = false;
                 ++depth;
-            }
-            if (inTag && *cursor == '/' && cursor[1] == '>') {
+            } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
                 inTag = false;
             }
@@ -423,28 +421,6 @@ int main() {
             const std::string_view localName(std::addressof(*cursor) + colonPosition, std::distance(cursor, nameEnd) - colonPosition);
             TRACE("STARTTAG localName", localName);
             cursor = std::next(nameEnd);
-
-            // const std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return isalnum(c) || c == ':' || c == '_' || c == '-' || c == '.'; });
-            // if (nameEnd == cursorEnd) {
-            //     std::cerr << "parser error: Incomplete element end tag name\n";
-            //     return 1;
-            // }
-            // const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            // TRACE("ENDTAG qName", qName);
-            // size_t colonPosition = qName.find(':');
-            // if (colonPosition == 0) {
-            //     std::cerr << "parser error : Invalid end tag name\n";
-            //     return 1;
-            // }
-            // if (colonPosition == std::string::npos)
-            //     colonPosition = 0;
-            // const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
-            // TRACE("ENDTAG prefix", prefix);
-            // if (colonPosition != 0)
-            //     colonPosition += 1;
-            // const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            // TRACE("ENDTAG localName", localName);
-            // cursor = std::next(nameEnd);
             --depth;
         } else if (*cursor == '<') {
             // parse start tag
@@ -506,16 +482,15 @@ int main() {
                 ++classCount;
             }
             cursor = nameEnd;
-            cursor = std::find_if_not(cursor, cursorEnd, isspace);
-            inTag = true;
-            if (inTag && *cursor == '>') {
+            if (*cursor != '>')
+                cursor = std::find_if_not(cursor, cursorEnd, isspace);
+            if (*cursor == '>') {
                 std::advance(cursor, 1);
-                inTag = false;
                 ++depth;
-            }
-            if (inTag && *cursor == '/' && cursor[1] == '>') {
+            } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
-                inTag = false;
+            } else {
+                inTag = true;
             }
         } else if (depth == 0) {
             // parse characters before or after XML
