@@ -133,9 +133,8 @@ int main() {
         } else if (inTag && (strncmp(std::addressof(*cursor), "xmlns", 5) == 0) && (cursor[5] == ':' || cursor[5] == '=')) {
             // parse XML namespace
             std::advance(cursor, 5);
-            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
-            if (nameEnd == std::next(tagEnd)) {
+            const std::string::const_iterator nameEnd = std::find(cursor, cursorEnd, '=');
+            if (nameEnd == cursorEnd) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
@@ -147,8 +146,8 @@ int main() {
             const std::string_view prefix(std::addressof(*cursor), prefixSize);
             TRACE("NAMESPACE prefix", prefix);
             cursor = std::next(nameEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
-            if (cursor == std::next(tagEnd)) {
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
+            if (cursor == cursorEnd) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
@@ -158,15 +157,15 @@ int main() {
                 return 1;
             }
             std::advance(cursor, 1);
-            const std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
-            if (valueEnd == std::next(tagEnd)) {
+            const std::string::const_iterator valueEnd = std::find(cursor, cursorEnd, delimiter);
+            if (valueEnd == cursorEnd) {
                 std::cerr << "parser error : incomplete namespace\n";
                 return 1;
             }
             const std::string_view uri(std::addressof(*cursor), std::distance(cursor, valueEnd));
             TRACE("NAMESPACE uri", uri);
             cursor = std::next(valueEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (*cursor == '>') {
                 std::advance(cursor, 1);
                 inTag = false;
@@ -176,10 +175,9 @@ int main() {
                 inTag = false;
             }
         } else if (inTag) {
-            // parse attribute
-            const std::string::const_iterator tagEnd = std::find(cursor, cursorEnd, '>');
-            const std::string::const_iterator nameEnd = std::find(cursor, std::next(tagEnd), '=');
-            if (nameEnd == std::next(tagEnd))
+            // parse attributee
+            const std::string::const_iterator nameEnd = std::find(cursor, cursorEnd, '=');
+            if (nameEnd == cursorEnd)
                 return 1;
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             TRACE("ATTRIBUTE qName", qName);
@@ -197,7 +195,7 @@ int main() {
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
             TRACE("ATTRIBUTE localName", localName);
             cursor = std::next(nameEnd);
-            cursor = std::find_if_not(cursor, std::next(tagEnd), isspace);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (cursor == cursorEnd) {
                 std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
                 return 1;
@@ -208,8 +206,8 @@ int main() {
                 return 1;
             }
             std::advance(cursor, 1);
-            std::string::const_iterator valueEnd = std::find(cursor, std::next(tagEnd), delimiter);
-            if (valueEnd == std::next(tagEnd)) {
+            std::string::const_iterator valueEnd = std::find(cursor, cursorEnd, delimiter);
+            if (valueEnd == cursorEnd) {
                 std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
                 return 1;
             }
@@ -219,7 +217,7 @@ int main() {
                 url = value;
             cursor = std::next(valueEnd);
             if (isspace(*cursor))
-                cursor = std::find_if_not(std::next(cursor), std::next(tagEnd), isspace);
+                cursor = std::find_if_not(std::next(cursor), cursorEnd, isspace);
             if (*cursor == '>') {
                 std::advance(cursor, 1);
                 inTag = false;
