@@ -516,18 +516,11 @@ int main() {
             ++textsize;
 
         } else {
-            std::string::const_iterator end = cursor;
-            int ncount = 0;
-            while (end != cursorEnd && *end != '<') {
-                if (*end == '\n')
-                    ++ncount;
-                else if (*end == '&')
-                    break;
-                ++end;
-            }
-            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, end));
+            // parse character non-entity references
+            const std::string::const_iterator tagEnd = std::find_if(cursor, cursorEnd, [] (char c) { return c == '<' || c == '&'; });
+            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
             TRACE("CHARACTERS", characters);
-            loc += ncount;
+            loc += static_cast<int>(std::count(characters.cbegin(), characters.cend(), '\n'));
             textsize += static_cast<int>(characters.size());
             std::advance(cursor, characters.size());
         }
