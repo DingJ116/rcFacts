@@ -33,6 +33,7 @@
 #include <memory>
 #include <string.h>
 #include <stdlib.h>
+#include <bitset>
 
 #if !defined(_MSC_VER)
 #include <sys/uio.h>
@@ -49,6 +50,8 @@ typedef SSIZE_T ssize_t;
 using namespace std::literals::string_view_literals;
 
 const int BUFFER_SIZE = 16 * 16 * 4096;
+
+std::bitset<128> tagNameMask("00000111111111111111111111111110100001111111111111111111111111100000001111111111011000000000000000000000000000000000000000000000");
 
 /*
     Refill the buffer preserving the unused data.
@@ -175,7 +178,7 @@ int main() {
                 inTag = false;
             }
         } else if (inTag) {
-            // parse attributee
+            // parse attribute
             const std::string::const_iterator nameEnd = std::find(cursor, cursorEnd, '=');
             if (nameEnd == cursorEnd)
                 return 1;
@@ -396,7 +399,7 @@ int main() {
                 std::cerr << "parser error : Invalid end tag name\n";
                 return 1;
             }
-            std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return isalnum(c) || c == '_' || c == '-' || c == '.'; });
+            std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return tagNameMask[c]; });
             if (nameEnd == cursorEnd) {
                 std::cerr << "parser error : Unterminated end tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
@@ -404,7 +407,7 @@ int main() {
             size_t colonPosition = 0;
             if (*nameEnd == ':') {
                 colonPosition = std::distance(cursor, nameEnd);
-                nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return isalnum(c) || c == '_' || c == '-' || c == '.'; });
+                nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return tagNameMask[c]; });
             }
             const std::string_view prefix(std::addressof(*cursor), colonPosition);
             TRACE("STARTTAG prefix", prefix);
@@ -442,7 +445,7 @@ int main() {
                 std::cerr << "parser error : Invalid start tag name\n";
                 return 1;
             }
-            std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return isalnum(c) || c == '_' || c == '-' || c == '.'; });
+            std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return tagNameMask[c]; });
             if (nameEnd == cursorEnd) {
                 std::cerr << "parser error : Unterminated start tag '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
@@ -450,7 +453,7 @@ int main() {
             size_t colonPosition = 0;
             if (*nameEnd == ':') {
                 colonPosition = std::distance(cursor, nameEnd);
-                nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return isalnum(c) || c == '_' || c == '-' || c == '.'; });
+                nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return tagNameMask[c]; });
             }
             const std::string_view prefix(std::addressof(*cursor), colonPosition);
             TRACE("STARTTAG prefix", prefix);
@@ -513,13 +516,20 @@ int main() {
             ++textsize;
 
         } else {
-            // parse character non-entity references
-            const std::string::const_iterator tagEnd = std::find_if(cursor, cursorEnd, [] (char c) { return c == '<' || c == '&'; });
-            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
+            std::string::const_iterator end = cursor;
+            int ncount = 0;
+            while (end != cursorEnd && *end != '<') {
+                if (*end == '\n')
+                    ++ncount;
+                else if (*end == '&')
+                    break;
+                ++end;
+            }
+            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, end));
             TRACE("CHARACTERS", characters);
-            loc += static_cast<int>(std::count(characters.cbegin(), characters.cend(), '\n'));
+            loc += ncount;
             textsize += static_cast<int>(characters.size());
-            cursor = tagEnd;
+            std::advance(cursor, characters.size());
         }
     }
     const auto finish = std::chrono::steady_clock::now();
