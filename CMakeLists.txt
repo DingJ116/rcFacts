@@ -22,6 +22,12 @@ set(SOURCE srcFacts.cpp)
 # srcFact application
 add_executable(srcFacts ${SOURCE})
 
+# cmake .. -DTRACE=
+if(TRACE)
+    message("TRACE is ${TRACE}")
+    target_compile_definitions(srcFacts PUBLIC TRACE)
+endif()
+
 # Turn on warnings
 if (MSVC)
     # warning level 4

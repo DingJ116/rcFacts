@@ -98,7 +98,8 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
     return readBytes;
 }
 
-#ifdef DOTRACE
+#ifdef TRACE
+#undef TRACE
 #define TRACE(m,n) std::clog << m << ": |" << n << "|\n";
 #else
 #define TRACE(m,n)
