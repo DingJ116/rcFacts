@@ -43,7 +43,7 @@ file(ARCHIVE_EXTRACT INPUT ${CMAKE_SOURCE_DIR}/demo.xml.zip)
 # Demo run command
 add_custom_target(run
         COMMENT "Run demo"
-        COMMAND time ./srcFacts < demo.xml
+        COMMAND $<TARGET_FILE:srcFacts> < demo.xml
         DEPENDS srcFacts
         USES_TERMINAL
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
