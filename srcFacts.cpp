@@ -100,9 +100,16 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
 
 #ifdef TRACE
 #undef TRACE
-#define TRACE(m,n) std::clog << m << ": |" << n << "|\n";
+#define HEADER(m) std::clog << std::setw(10) << std::left << m <<"\t"
+#define FIELD(l, n) l << "|" << n << "| "
+#define TRACE1(m, l1, n1) HEADER(m) << FIELD(l1,n1) << "\n";
+#define TRACE2(m, l1, n1, l2, n2) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << "\n";
+#define TRACE3(m, l1, n1, l2, n2, l3, n3) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l2,n3) << "\n";
+#define TRACE4(m, l1, n1, l2, n2, l3, n3, l4, n4) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l3,n3) << FIELD(l4,n4) << '\n';
+#define GET_TRACE(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
+#define TRACE(...) GET_TRACE(__VA_ARGS__, TRACE4, _UNUSED, TRACE3, _UNUSED, TRACE2, _UNUSED, TRACE1)(__VA_ARGS__)
 #else
-#define TRACE(m,n)
+#define TRACE(...)
 #endif
 
 int main() {
@@ -148,7 +155,6 @@ int main() {
                 prefixSize = std::distance(cursor, nameEnd);
             }
             const std::string_view prefix(std::addressof(*cursor), prefixSize);
-            TRACE("NAMESPACE prefix", prefix);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (cursor == cursorEnd) {
@@ -167,7 +173,7 @@ int main() {
                 return 1;
             }
             const std::string_view uri(std::addressof(*cursor), std::distance(cursor, valueEnd));
-            TRACE("NAMESPACE uri", uri);
+            TRACE("NAMESPACE", "prefix", prefix, "uri", uri);
             cursor = std::next(valueEnd);
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (*cursor == '>') {
@@ -184,7 +190,6 @@ int main() {
             if (nameEnd == cursorEnd)
                 return 1;
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            TRACE("ATTRIBUTE qName", qName);
             size_t colonPosition = qName.find(':');
             if (colonPosition == 0) {
                 std::cerr << "parser error : Invalid attribute name " << qName << "\n";
@@ -193,11 +198,9 @@ int main() {
             if (colonPosition == std::string::npos)
                 colonPosition = 0;
             const std::string_view prefix(std::addressof(*qName.cbegin()), colonPosition);
-            TRACE("ATTRIBUTE prefix", prefix);
             if (colonPosition != 0)
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            TRACE("ATTRIBUTE localName", localName);
             cursor = std::next(nameEnd);
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (cursor == cursorEnd) {
@@ -216,7 +219,8 @@ int main() {
                 return 1;
             }
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
-            TRACE("ATTRIBUTE value", value);
+            TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
+
             if (localName == "url"sv)
                 url = value;
             cursor = std::next(valueEnd);
@@ -336,6 +340,7 @@ int main() {
                 cursor = std::next(valueEnd);
                 cursor = std::find_if_not(cursor, tagEnd, isspace);
             }
+            TRACE("XML DECLARATION", "version", version, "encoding", *encoding, "standalone", *standalone);
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[' && (strncmp(std::addressof(cursor[3]), "CDATA[", 6) == 0)) {
@@ -354,7 +359,7 @@ int main() {
                     return 1;
             }
             const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
-            TRACE("CDATA", characters);
+            TRACE("CDATA", "characters", characters);
             textsize += static_cast<int>(characters.size());
             loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
             cursor = std::next(tagEnd, endCDATA.size());
@@ -376,7 +381,7 @@ int main() {
                 }
             }
             const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
-            TRACE("COMMENT", comment);
+            TRACE("COMMENT", "comment", comment);
             cursor = std::next(tagEnd, endComment.size());
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
@@ -411,17 +416,15 @@ int main() {
                 nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return tagNameMask[c]; });
             }
             const std::string_view prefix(std::addressof(*cursor), colonPosition);
-            TRACE("ENDTAG prefix", prefix);
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             if (qName.empty()) {
                 std::cerr << "parser error: EndTag: invalid element name\n";
                 return 1;
             }
-            TRACE("ENDTAG qName", qName);
             if (colonPosition)
                 ++colonPosition;
             const std::string_view localName(std::addressof(*cursor) + colonPosition, std::distance(cursor, nameEnd) - colonPosition);
-            TRACE("ENDTAG localName", localName);
+            TRACE("END TAG", "prefix", prefix, "qName", qName, "localName", localName);
             cursor = std::next(nameEnd);
             --depth;
         } else if (*cursor == '<') {
@@ -457,17 +460,15 @@ int main() {
                 nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return tagNameMask[c]; });
             }
             const std::string_view prefix(std::addressof(*cursor), colonPosition);
-            TRACE("STARTTAG prefix", prefix);
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             if (qName.empty()) {
                 std::cerr << "parser error: StartTag: invalid element name\n";
                 return 1;
             }
-            TRACE("STARTTAG qName", qName);
             if (colonPosition)
                 ++colonPosition;
             const std::string_view localName(std::addressof(*cursor) + colonPosition, std::distance(cursor, nameEnd) - colonPosition);
-            TRACE("STARTTAG localName", localName);
+            TRACE("START TAG", "prefix", prefix, "qName", qName, "localName", localName);
             if (localName == "expr"sv) {
                 ++exprCount;
             } else if (localName == "decl"sv) {
@@ -513,14 +514,14 @@ int main() {
                 characters = "&";
                 std::advance(cursor, 1);
             }
-            TRACE("ENTITYREF", characters);
+            TRACE("ENTITYREF", "characters", characters);
             ++textsize;
 
         } else {
             // parse character non-entity references
             const std::string::const_iterator tagEnd = std::find_if(cursor, cursorEnd, [] (char c) { return c == '<' || c == '&'; });
             const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
-            TRACE("CHARACTERS", characters);
+            TRACE("CHARACTERS", "characters", characters);
             loc += static_cast<int>(std::count(characters.cbegin(), characters.cend(), '\n'));
             textsize += static_cast<int>(characters.size());
             std::advance(cursor, characters.size());
