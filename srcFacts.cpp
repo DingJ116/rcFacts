@@ -219,8 +219,6 @@ int main() {
                 return 1;
             }
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
-            TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
-
             if (localName == "url"sv)
                 url = value;
             cursor = std::next(valueEnd);
@@ -234,6 +232,7 @@ int main() {
                 std::advance(cursor, 2);
                 inTag = false;
             }
+            TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
         } else if (cursor[1] == '?' && *cursor == '<' && (strncmp(std::addressof(*cursor), "<?xml", 5) == 0)) {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
