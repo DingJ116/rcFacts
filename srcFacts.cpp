@@ -526,6 +526,9 @@ int main() {
             std::advance(cursor, characters.size());
         }
     }
+#ifdef TRACE
+    return 0;
+#endif
     const auto finish = std::chrono::steady_clock::now();
     const auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
     const double mlocPerSec = loc / elapsed_seconds / 1000000;
