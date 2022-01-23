@@ -490,9 +490,6 @@ int main() {
             } else if (localName == "class"sv) {
                 ++classCount;
             }
-            inTagQName = qName;
-            inTagPrefix = prefix;
-            inTagLocalName = localName;
             cursor = nameEnd;
             if (*cursor != '>')
                 cursor = std::find_if_not(cursor, cursorEnd, isspace);
@@ -501,8 +498,11 @@ int main() {
                 ++depth;
             } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
-                TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
+                TRACE("END TAG", "prefix", prefix, "qName", qName, "localName", localName);
             } else {
+                inTagQName = qName;
+                inTagPrefix = prefix;
+                inTagLocalName = localName;
                 inTag = true;
             }
         } else if (depth == 0) {
