@@ -127,6 +127,9 @@ int main() {
     int depth = 0;
     long totalBytes = 0;
     bool inTag = false;
+    std::string inTagPrefix;
+    std::string inTagQName;
+    std::string inTagLocalName;
     bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator cursor = buffer.cend();
@@ -184,6 +187,7 @@ int main() {
                 ++depth;
             } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
+                TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
                 inTag = false;
             }
         } else if (inTag) {
@@ -232,6 +236,7 @@ int main() {
                 ++depth;
             } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
+                TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
                 inTag = false;
             }
             TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
@@ -485,6 +490,9 @@ int main() {
             } else if (localName == "class"sv) {
                 ++classCount;
             }
+            inTagQName = qName;
+            inTagPrefix = prefix;
+            inTagLocalName = localName;
             cursor = nameEnd;
             if (*cursor != '>')
                 cursor = std::find_if_not(cursor, cursorEnd, isspace);
@@ -493,6 +501,7 @@ int main() {
                 ++depth;
             } else if (*cursor == '/' && cursor[1] == '>') {
                 std::advance(cursor, 2);
+                TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
             } else {
                 inTag = true;
             }
