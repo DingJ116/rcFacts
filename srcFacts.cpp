@@ -423,9 +423,9 @@ int main() {
             if (colonPosition)
                 ++colonPosition;
             const std::string_view localName(std::addressof(*cursor) + colonPosition, std::distance(cursor, nameEnd) - colonPosition);
-            TRACE("END TAG", "prefix", prefix, "qName", qName, "localName", localName);
             cursor = std::next(nameEnd);
             --depth;
+            TRACE("END TAG", "prefix", prefix, "qName", qName, "localName", localName);
         } else if (*cursor == '<') {
             // parse start tag
             if (std::distance(cursor, cursorEnd) < 200) {
