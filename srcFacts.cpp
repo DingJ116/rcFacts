@@ -411,17 +411,17 @@ int main() {
                 nameEnd = std::find_if_not(std::next(nameEnd), cursorEnd, [] (char c) { return tagNameMask[c]; });
             }
             const std::string_view prefix(std::addressof(*cursor), colonPosition);
-            TRACE("STARTTAG prefix", prefix);
+            TRACE("ENDTAG prefix", prefix);
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             if (qName.empty()) {
                 std::cerr << "parser error: EndTag: invalid element name\n";
                 return 1;
             }
-            TRACE("STARTTAG qName", qName);
+            TRACE("ENDTAG qName", qName);
             if (colonPosition)
                 ++colonPosition;
             const std::string_view localName(std::addressof(*cursor) + colonPosition, std::distance(cursor, nameEnd) - colonPosition);
-            TRACE("STARTTAG localName", localName);
+            TRACE("ENDTAG localName", localName);
             cursor = std::next(nameEnd);
             --depth;
         } else if (*cursor == '<') {
