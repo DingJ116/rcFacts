@@ -227,6 +227,7 @@ int main() {
             const std::string_view value(std::addressof(*cursor), std::distance(cursor, valueEnd));
             if (localName == "url"sv)
                 url = value;
+            TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
             cursor = std::next(valueEnd);
             if (isspace(*cursor))
                 cursor = std::find_if_not(std::next(cursor), cursorEnd, isspace);
@@ -239,7 +240,6 @@ int main() {
                 TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
                 inTag = false;
             }
-            TRACE("ATTRIBUTE", "prefix", prefix, "qname", qName, "localName", localName, "value", value);
         } else if (cursor[1] == '?' && *cursor == '<' && (strncmp(std::addressof(*cursor), "<?xml", 5) == 0)) {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
