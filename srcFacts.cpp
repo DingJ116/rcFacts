@@ -102,12 +102,13 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
 #undef TRACE
 #define HEADER(m) std::clog << std::setw(10) << std::left << m <<"\t"
 #define FIELD(l, n) l << "|" << n << "| "
+#define TRACE0(m)
 #define TRACE1(m, l1, n1) HEADER(m) << FIELD(l1,n1) << "\n";
 #define TRACE2(m, l1, n1, l2, n2) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << "\n";
 #define TRACE3(m, l1, n1, l2, n2, l3, n3) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l2,n3) << "\n";
 #define TRACE4(m, l1, n1, l2, n2, l3, n3, l4, n4) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l3,n3) << FIELD(l4,n4) << '\n';
 #define GET_TRACE(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
-#define TRACE(...) GET_TRACE(__VA_ARGS__, TRACE4, _UNUSED, TRACE3, _UNUSED, TRACE2, _UNUSED, TRACE1)(__VA_ARGS__)
+#define TRACE(...) GET_TRACE(__VA_ARGS__, TRACE4, _UNUSED, TRACE3, _UNUSED, TRACE2, _UNUSED, TRACE1, _UNUSED, TRACE0)(__VA_ARGS__)
 #else
 #define TRACE(...)
 #endif
@@ -130,6 +131,7 @@ int main() {
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator cursor = buffer.cend();
     std::string::const_iterator cursorEnd = buffer.cend();
+    TRACE("START DOCUMENT");
     while (true) {
         if (std::distance(cursor, cursorEnd) < 5) {
             // refill buffer and adjust iterator
@@ -526,9 +528,7 @@ int main() {
             std::advance(cursor, characters.size());
         }
     }
-#ifdef TRACE
-    return 0;
-#endif
+    TRACE("END DOCUMENT");
     const auto finish = std::chrono::steady_clock::now();
     const auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double> >(finish - start).count();
     const double mlocPerSec = loc / elapsed_seconds / 1000000;
