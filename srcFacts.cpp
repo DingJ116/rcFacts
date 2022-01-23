@@ -377,7 +377,6 @@ int main() {
             const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
             TRACE("COMMENT", comment);
             cursor = std::next(tagEnd, endComment.size());
-            cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
             if (std::distance(cursor, cursorEnd) < 100) {
