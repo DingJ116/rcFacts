@@ -360,6 +360,7 @@ int main() {
             cursor = std::next(tagEnd, endCDATA.size());
         } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '-' && cursor[3] == '-') {
             // parse XML comment
+            std::advance(cursor, 4);
             constexpr std::string_view endComment = "-->";
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
             if (tagEnd == cursorEnd) {
