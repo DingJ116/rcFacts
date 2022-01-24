@@ -130,9 +130,9 @@ int main() {
     bool inTag = false;
     bool inXMLComment = false;
     bool inCDATA = false;
-    std::string inTagPrefix;
     std::string inTagQName;
-    std::string inTagLocalName;
+    std::string_view inTagPrefix;
+    std::string_view inTagLocalName;
     bool isArchive = false;
     std::string buffer(BUFFER_SIZE, ' ');
     std::string::const_iterator cursor = buffer.cend();
@@ -539,8 +539,8 @@ int main() {
                 TRACE("END TAG", "prefix", prefix, "qName", qName, "localName", localName);
             } else {
                 inTagQName = qName;
-                inTagPrefix = prefix;
-                inTagLocalName = localName;
+                inTagPrefix = std::string_view(inTagQName.data(), prefix.size());
+                inTagLocalName = std::string_view(inTagQName.data() + prefix.size() + 1);
                 inTag = true;
             }
         } else if (depth == 0) {
