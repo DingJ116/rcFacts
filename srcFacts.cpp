@@ -386,7 +386,7 @@ int main() {
                 cursor = std::next(valueEnd);
                 cursor = std::find_if_not(cursor, tagEnd, isspace);
             }
-            TRACE("XML DECLARATION", "version", version, "encoding", *encoding, "standalone", *standalone);
+            TRACE("XML DECLARATION", "version", version, "encoding", (encoding ? *encoding : ""), "standalone", (standalone ? *standalone : ""));
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
         } else if (cursor[1] == '?' && *cursor == '<') {
