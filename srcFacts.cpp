@@ -261,7 +261,7 @@ int main() {
             }
             if (!inXMLComment)
                 std::advance(cursor, 4);
-            constexpr std::string_view endComment = "-->";
+            constexpr std::string_view endComment = "-->"sv;
             std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
             inXMLComment = tagEnd == cursorEnd;
             const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
