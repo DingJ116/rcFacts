@@ -102,7 +102,7 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
 #ifdef TRACE
 #undef TRACE
 #define HEADER(m) std::clog << std::setw(10) << std::left << m <<"\t"
-#define FIELD(l, n) l << "|" << n << "| "
+#define FIELD(l, n) l << ":|" << n << "| "
 #define TRACE0(m)
 #define TRACE1(m, l1, n1) HEADER(m) << FIELD(l1,n1) << "\n";
 #define TRACE2(m, l1, n1, l2, n2) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << "\n";
