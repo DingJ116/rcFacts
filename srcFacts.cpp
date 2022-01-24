@@ -389,6 +389,34 @@ int main() {
             TRACE("XML DECLARATION", "version", version, "encoding", *encoding, "standalone", *standalone);
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
+        } else if (cursor[1] == '?' && *cursor == '<') {
+            // parse processing instruction
+            constexpr std::string_view endPI = "?>";
+            std::string::const_iterator piEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end());
+            if (piEnd == cursorEnd) {
+                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
+                if (bytesRead < 0) {
+                    std::cerr << "parser error : File input error\n";
+                    return 1;
+                }
+                totalBytes += bytesRead;
+                if ((piEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end())) == cursorEnd) {
+                    std::cerr << "parser error: Incomplete XML declaration\n";
+                    return 1;
+                }
+            }
+            std::advance(cursor, 2);
+            std::string::const_iterator nameEnd = std::find_if_not(cursor, piEnd, [] (char c) { return tagNameMask[c]; });
+            if (nameEnd == piEnd) {
+                std::cerr << "parser error : Unterminated processing instruction '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
+                return 1;
+            }
+            const std::string_view target(std::addressof(*cursor), std::distance(cursor, nameEnd));
+            cursor = std::find_if_not(nameEnd, piEnd, isspace);
+            const std::string_view data(std::addressof(*cursor), std::distance(cursor, piEnd));
+            TRACE("PI", "target", target, "data", data);
+            cursor = piEnd;
+            std::advance(cursor, 2);
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
             if (std::distance(cursor, cursorEnd) < 100) {
