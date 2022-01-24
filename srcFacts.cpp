@@ -98,6 +98,7 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
     return readBytes;
 }
 
+// trace parsing
 #ifdef TRACE
 #undef TRACE
 #define HEADER(m) std::clog << std::setw(10) << std::left << m <<"\t"
