@@ -31,9 +31,14 @@ You can also time it:
 time ./srcFacts < libxml2.xml
 ```
 
-By default, cmake assumes aCMAKE_BUILD_TYPE of Debug.
-For a (much) faster program:
+Tracing is off by default. To turn tracing on:
 
 ```console
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DTRACE=ON
+```
+
+To turn tracing back off:
+
+```console
+cmake .. -DTRACE=OFF
 ```
