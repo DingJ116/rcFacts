@@ -147,15 +147,7 @@ int main() {
                 return 1;
             }
             totalBytes += bytesRead;
-            if (inXMLComment && cursor == cursorEnd) {
-                std::cerr << "parser error : Unterminated XML comment\n";
-                return 1;
-            }
-            if (inCDATA && cursor == cursorEnd) {
-                std::cerr << "parser error : Unterminated CDATA\n";
-                return 1;
-            }
-            if (cursor == cursorEnd)
+            if (!inXMLComment && !inCDATA && cursor == cursorEnd)
                 break;
         } else if (inTag && (strncmp(std::addressof(*cursor), "xmlns", 5) == 0) && (cursor[5] == ':' || cursor[5] == '=')) {
             // parse XML namespace
@@ -263,6 +255,10 @@ int main() {
             }
         } else if (inXMLComment || (cursor[1] == '!' && *cursor == '<' && cursor[2] == '-' && cursor[3] == '-')) {
             // parse XML comment
+            if (cursor == cursorEnd) {
+                std::cerr << "parser error : Unterminated XML comment\n";
+                return 1;
+            }
             if (!inXMLComment)
                 std::advance(cursor, 4);
             constexpr std::string_view endComment = "-->";
@@ -276,6 +272,10 @@ int main() {
                 cursor = tagEnd;
         } else if (inCDATA || (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[' && (strncmp(std::addressof(cursor[3]), "CDATA[", 6) == 0))) {
             // parse CDATA
+            if (cursor == cursorEnd) {
+                std::cerr << "parser error : Unterminated CDATA\n";
+                return 1;
+            }
             constexpr std::string_view endCDATA = "]]>"sv;
             if (!inCDATA)
                 std::advance(cursor, 9);
