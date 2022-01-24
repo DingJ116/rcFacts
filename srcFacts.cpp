@@ -328,7 +328,7 @@ int main() {
             // parse optional encoding and standalone attributes
             std::optional<std::string_view> encoding;
             std::optional<std::string_view> standalone;
-            if (cursor != (tagEnd - endXMLDecl.size())) {
+            if (cursor != (tagEnd - 1)) {
                 nameEnd = std::find(cursor, tagEnd, '=');
                 if (nameEnd == tagEnd) {
                     std::cerr << "parser error: Incomplete attribute in XML declaration\n";
