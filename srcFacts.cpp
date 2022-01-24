@@ -220,7 +220,9 @@ int main() {
             if (colonPosition != 0)
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            cursor = std::find_if_not(nameEnd, cursorEnd, isspace);
+            cursor = nameEnd;
+            if (isspace(*cursor))
+                cursor = std::find_if_not(cursor, cursorEnd, isspace);
             if (cursor == cursorEnd) {
                 std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
                 return 1;
@@ -230,7 +232,8 @@ int main() {
                 return 1;
             }
             std::advance(cursor, 1);
-            cursor = std::find_if_not(cursor, cursorEnd, isspace);
+            if (isspace(*cursor))
+                cursor = std::find_if_not(cursor, cursorEnd, isspace);
             const char delimiter = *cursor;
             if (delimiter != '"' && delimiter != '\'') {
                 std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
