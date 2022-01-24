@@ -392,30 +392,30 @@ int main() {
         } else if (cursor[1] == '?' && *cursor == '<') {
             // parse processing instruction
             constexpr std::string_view endPI = "?>";
-            std::string::const_iterator piEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end());
-            if (piEnd == cursorEnd) {
+            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end());
+            if (tagEnd == cursorEnd) {
                 int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
                 if (bytesRead < 0) {
                     std::cerr << "parser error : File input error\n";
                     return 1;
                 }
                 totalBytes += bytesRead;
-                if ((piEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end())) == cursorEnd) {
+                if ((tagEnd = std::search(cursor, cursorEnd, endPI.begin(), endPI.end())) == cursorEnd) {
                     std::cerr << "parser error: Incomplete XML declaration\n";
                     return 1;
                 }
             }
             std::advance(cursor, 2);
-            std::string::const_iterator nameEnd = std::find_if_not(cursor, piEnd, [] (char c) { return tagNameMask[c]; });
-            if (nameEnd == piEnd) {
+            std::string::const_iterator nameEnd = std::find_if_not(cursor, tagEnd, [] (char c) { return tagNameMask[c]; });
+            if (nameEnd == tagEnd) {
                 std::cerr << "parser error : Unterminated processing instruction '" << std::string_view(std::addressof(*cursor), std::distance(cursor, nameEnd)) << "'\n";
                 return 1;
             }
             const std::string_view target(std::addressof(*cursor), std::distance(cursor, nameEnd));
-            cursor = std::find_if_not(nameEnd, piEnd, isspace);
-            const std::string_view data(std::addressof(*cursor), std::distance(cursor, piEnd));
+            cursor = std::find_if_not(nameEnd, tagEnd, isspace);
+            const std::string_view data(std::addressof(*cursor), std::distance(cursor, tagEnd));
             TRACE("PI", "target", target, "data", data);
-            cursor = piEnd;
+            cursor = tagEnd;
             std::advance(cursor, 2);
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
