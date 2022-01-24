@@ -203,9 +203,11 @@ int main() {
             }
         } else if (inTag) {
             // parse attribute
-            const std::string::const_iterator nameEnd = std::find(cursor, cursorEnd, '=');
-            if (nameEnd == cursorEnd)
+            const std::string::const_iterator nameEnd = std::find_if_not(cursor, cursorEnd, [] (char c) { return tagNameMask[c]; });
+            if (nameEnd == cursorEnd) {
+                std::cerr << "parser error : Empty attribute name" << '\n';
                 return 1;
+            }
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             size_t colonPosition = qName.find(':');
             if (colonPosition == 0) {
@@ -218,12 +220,17 @@ int main() {
             if (colonPosition != 0)
                 colonPosition += 1;
             const std::string_view localName(std::addressof(*qName.cbegin()) + colonPosition, qName.size() - colonPosition);
-            cursor = std::next(nameEnd);
-            cursor = std::find_if_not(cursor, cursorEnd, isspace);
+            cursor = std::find_if_not(nameEnd, cursorEnd, isspace);
             if (cursor == cursorEnd) {
                 std::cerr << "parser error : attribute " << qName << " incomplete attribute\n";
                 return 1;
             }
+            if (*cursor != '=') {
+                std::cerr << "parser error : attribute " << qName << " missing =\n";
+                return 1;
+            }
+            std::advance(cursor, 1);
+            cursor = std::find_if_not(cursor, cursorEnd, isspace);
             const char delimiter = *cursor;
             if (delimiter != '"' && delimiter != '\'') {
                 std::cerr << "parser error : attribute " << qName << " missing delimiter\n";
