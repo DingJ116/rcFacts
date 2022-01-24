@@ -127,6 +127,7 @@ int main() {
     int depth = 0;
     long totalBytes = 0;
     bool inTag = false;
+    bool inXMLComment = false;
     std::string inTagPrefix;
     std::string inTagQName;
     std::string inTagLocalName;
@@ -144,6 +145,10 @@ int main() {
                 return 1;
             }
             totalBytes += bytesRead;
+            if (inXMLComment && cursor == cursorEnd) {
+                std::cerr << "parser error : Unterminated XML comment\n";
+                return 1;
+            }
             if (cursor == cursorEnd)
                 break;
         } else if (inTag && (strncmp(std::addressof(*cursor), "xmlns", 5) == 0) && (cursor[5] == ':' || cursor[5] == '=')) {
@@ -240,6 +245,19 @@ int main() {
                 TRACE("END TAG", "prefix", inTagPrefix, "qName", inTagQName, "localName", inTagLocalName);
                 inTag = false;
             }
+        } else if (inXMLComment || (cursor[1] == '!' && *cursor == '<' && cursor[2] == '-' && cursor[3] == '-')) {
+            // parse XML comment
+            if (!inXMLComment)
+                std::advance(cursor, 4);
+            constexpr std::string_view endComment = "-->";
+            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
+            inXMLComment = tagEnd == cursorEnd;
+            const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
+            TRACE("COMMENT", "comment", comment);
+            if (!inXMLComment)
+                cursor = std::next(tagEnd, endComment.size());
+            else
+                cursor = tagEnd;
         } else if (cursor[1] == '?' && *cursor == '<' && (strncmp(std::addressof(*cursor), "<?xml", 5) == 0)) {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
@@ -369,26 +387,6 @@ int main() {
             textsize += static_cast<int>(characters.size());
             loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
             cursor = std::next(tagEnd, endCDATA.size());
-        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '-' && cursor[3] == '-') {
-            // parse XML comment
-            std::advance(cursor, 4);
-            constexpr std::string_view endComment = "-->";
-            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end());
-            if (tagEnd == cursorEnd) {
-                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
-                if (bytesRead < 0) {
-                    std::cerr << "parser error : File input error\n";
-                    return 1;
-                }
-                totalBytes += bytesRead;
-                if ((tagEnd = std::search(cursor, cursorEnd, endComment.begin(), endComment.end())) == cursorEnd) {
-                    std::cerr << "parser error : Unterminated XML comment\n";
-                    return 1;
-                }
-            }
-            const std::string_view comment(std::addressof(*cursor), std::distance(cursor, tagEnd));
-            TRACE("COMMENT", "comment", comment);
-            cursor = std::next(tagEnd, endComment.size());
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
             if (std::distance(cursor, cursorEnd) < 100) {
