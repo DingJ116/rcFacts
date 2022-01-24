@@ -104,9 +104,9 @@ int refillBuffer(std::string::const_iterator& cursor, std::string::const_iterato
 #define HEADER(m) std::clog << std::setw(10) << std::left << m <<"\t"
 #define FIELD(l, n) l << ":|" << n << "| "
 #define TRACE0(m)
-#define TRACE1(m, l1, n1) HEADER(m) << FIELD(l1,n1) << "\n";
-#define TRACE2(m, l1, n1, l2, n2) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << "\n";
-#define TRACE3(m, l1, n1, l2, n2, l3, n3) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l3,n3) << "\n";
+#define TRACE1(m, l1, n1) HEADER(m) << FIELD(l1,n1) << '\n';
+#define TRACE2(m, l1, n1, l2, n2) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << '\n';
+#define TRACE3(m, l1, n1, l2, n2, l3, n3) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l3,n3) << '\n';
 #define TRACE4(m, l1, n1, l2, n2, l3, n3, l4, n4) HEADER(m) << FIELD(l1,n1) << FIELD(l2,n2) << FIELD(l3,n3) << FIELD(l4,n4) << '\n';
 #define GET_TRACE(_1,_2,_3,_4,_5,_6,_7,_8,_9,NAME,...) NAME
 #define TRACE(...) GET_TRACE(__VA_ARGS__, TRACE4, _UNUSED, TRACE3, _UNUSED, TRACE2, _UNUSED, TRACE1, _UNUSED, TRACE0)(__VA_ARGS__)
@@ -209,7 +209,7 @@ int main() {
             const std::string_view qName(std::addressof(*cursor), std::distance(cursor, nameEnd));
             size_t colonPosition = qName.find(':');
             if (colonPosition == 0) {
-                std::cerr << "parser error : Invalid attribute name " << qName << "\n";
+                std::cerr << "parser error : Invalid attribute name " << qName << '\n';
                 return 1;
             }
             if (colonPosition == std::string::npos)
@@ -586,7 +586,7 @@ int main() {
     std::cout << "| Declarations | " << std::setw(valueWidth) << declCount     << " |\n";
     std::cout << "| Expressions  | " << std::setw(valueWidth) << exprCount     << " |\n";
     std::cout << "| Comments     | " << std::setw(valueWidth) << commentCount  << " |\n";
-    std::clog << "\n";
+    std::clog << '\n';
     std::clog << std::setprecision(3) << elapsed_seconds << " sec\n";
     std::clog << std::setprecision(3) << mlocPerSec << " MLOC/sec\n";
     return 0;
