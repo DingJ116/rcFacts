@@ -128,6 +128,7 @@ int main() {
     long totalBytes = 0;
     bool inTag = false;
     bool inXMLComment = false;
+    bool inCDATA = false;
     std::string inTagPrefix;
     std::string inTagQName;
     std::string inTagLocalName;
@@ -147,6 +148,10 @@ int main() {
             totalBytes += bytesRead;
             if (inXMLComment && cursor == cursorEnd) {
                 std::cerr << "parser error : Unterminated XML comment\n";
+                return 1;
+            }
+            if (inCDATA && cursor == cursorEnd) {
+                std::cerr << "parser error : Unterminated CDATA\n";
                 return 1;
             }
             if (cursor == cursorEnd)
@@ -258,6 +263,22 @@ int main() {
                 cursor = std::next(tagEnd, endComment.size());
             else
                 cursor = tagEnd;
+        } else if (inCDATA || (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[' && (strncmp(std::addressof(cursor[3]), "CDATA[", 6) == 0))) {
+            // parse CDATA
+            constexpr std::string_view endCDATA = "]]>"sv;
+            if (!inCDATA)
+                std::advance(cursor, 9);
+            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
+            inCDATA = tagEnd == cursorEnd;
+            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
+            TRACE("CDATA", "characters", characters);
+            textsize += static_cast<int>(characters.size());
+            loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
+            cursor = std::next(tagEnd, endCDATA.size());
+            if (!inCDATA)
+                cursor = std::next(tagEnd, endCDATA.size());
+            else
+                cursor = tagEnd;
         } else if (cursor[1] == '?' && *cursor == '<' && (strncmp(std::addressof(*cursor), "<?xml", 5) == 0)) {
             // parse XML declaration
             constexpr std::string_view startXMLDecl = "<?xml";
@@ -367,26 +388,6 @@ int main() {
             TRACE("XML DECLARATION", "version", version, "encoding", *encoding, "standalone", *standalone);
             std::advance(cursor, endXMLDecl.size());
             cursor = std::find_if_not(cursor, cursorEnd, isspace);
-        } else if (cursor[1] == '!' && *cursor == '<' && cursor[2] == '[' && (strncmp(std::addressof(cursor[3]), "CDATA[", 6) == 0)) {
-            // parse CDATA
-            constexpr std::string_view endCDATA = "]]>"sv;
-            std::advance(cursor, 9);
-            std::string::const_iterator tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end());
-            if (tagEnd == cursorEnd) {
-                int bytesRead = refillBuffer(cursor, cursorEnd, buffer);
-                if (bytesRead < 0) {
-                    std::cerr << "parser error : File input error\n";
-                    return 1;
-                }
-                totalBytes += bytesRead;
-                if ((tagEnd = std::search(cursor, cursorEnd, endCDATA.begin(), endCDATA.end())) == cursorEnd)
-                    return 1;
-            }
-            const std::string_view characters(std::addressof(*cursor), std::distance(cursor, tagEnd));
-            TRACE("CDATA", "characters", characters);
-            textsize += static_cast<int>(characters.size());
-            loc += static_cast<int>(std::count(characters.begin(), characters.end(), '\n'));
-            cursor = std::next(tagEnd, endCDATA.size());
         } else if (cursor[1] == '/' && *cursor == '<') {
             // parse end tag
             if (std::distance(cursor, cursorEnd) < 100) {
