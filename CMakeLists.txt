@@ -17,7 +17,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Source files for the main program srcFacts
-set(SOURCE srcFacts.cpp)
+set(SOURCE srcFacts.cpp refillBuffer.cpp)
 
 # srcFact application
 add_executable(srcFacts ${SOURCE})
